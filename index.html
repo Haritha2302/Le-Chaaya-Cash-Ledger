@@ -274,7 +274,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
           <p class="help">Read this off the POS. Never work it out from the cash in the drawer — that makes the check meaningless.</p>
         </div>
         <div class="field">
-          <label class="lbl" for="mAdvance">Advances taken in cash</label>
+          <label class="lbl" for="mAdvance">Change kept back for customers</label>
           <input id="mAdvance" type="number" disabled>
           <p class="help" id="advanceHelp"></p>
         </div>
@@ -297,7 +297,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
           <input id="mRefundReason" type="text" style="margin-top:9px" placeholder="What was refunded">
         </div>
         <div class="field">
-          <label class="lbl" for="mReturned">Advances returned in cash</label>
+          <label class="lbl" for="mReturned">Change settled with customers</label>
           <input id="mReturned" type="number" disabled>
           <p class="help" id="returnHelp"></p>
         </div>
@@ -344,7 +344,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
         <div class="reveal quiet">
           <p class="eyebrow" style="margin-bottom:10px">Whose money is in the drawer</p>
           <div class="rrow"><span>Counted</span><span id="czOwnCounted">₹0</span></div>
-          <div class="rrow"><span>Advances you are holding</span><span id="czHeld">₹0</span></div>
+          <div class="rrow"><span>Change you still owe customers</span><span id="czHeld">₹0</span></div>
           <div class="diff"><strong>The business's cash</strong><span class="big" id="czOwn">₹0</span></div>
           <p class="help" id="czFree"></p>
         </div>
@@ -378,9 +378,8 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
       <div class="field">
         <label class="lbl" for="dEvent">What happened</label>
         <select id="dEvent">
-          <option value="advance_taken">They paid in advance</option>
-          <option value="advance_delivered">We gave them what they'd paid for</option>
-          <option value="advance_returned">We gave their advance back in cash</option>
+          <option value="advance_taken">We owed them change and kept it</option>
+          <option value="advance_returned">We settled their change</option>
           <option value="credit_given">They took goods without paying</option>
           <option value="dues_collected">They settled what they owed</option>
         </select>
@@ -403,7 +402,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 
       <div class="field">
         <label class="lbl" for="dNote">Note (optional)</label>
-        <input id="dNote" type="text" placeholder="Birthday cake for the 12th">
+        <input id="dNote" type="text" placeholder="Short of ten-rupee notes">
       </div>
 
       <button class="btn wide" id="dSaveBtn">Add to the dues book</button>
@@ -492,9 +491,8 @@ const COINS = [
 const ALL_DENOMS = NOTES.concat(COINS);
 
 const EVENT_HELP = {
-  advance_taken:     'Money in now for something you hand over later. It stays theirs until you do.',
-  advance_delivered: 'You handed over what they had already paid for. No money moves today.',
-  advance_returned:  'They cancelled and you gave the cash back. This one leaves the drawer.',
+  advance_taken:     'You could not give full change, so the balance stayed in the drawer. That money is theirs, not yours.',
+  advance_returned:  'Either you handed the cash back, or you knocked it off their next bill. Log it both ways — ring the full bill on the POS and record the settlement here.',
   credit_given:      'They walked out without paying. No money moves today.',
   dues_collected:    'They cleared an old balance.'
 };
@@ -848,11 +846,11 @@ function renderCloseTape(){
   const rows = [
     ['In the drawer this morning', v.opening, false, true],
     ['Cash sales', v.sales, false, true],
-    ['Advances taken', v.advance, false, false],
+    ['Change kept back', v.advance, false, false],
     ['Dues collected', v.dues, false, false],
     ['Owner top-up', v.topup, false, false],
     ['Refunds paid', v.refund, true, false],
-    ['Advances returned', v.returned, true, false],
+    ['Change settled', v.returned, true, false],
     ['Taken out of the drawer', v.removed, true, false]
   ].filter(r => r[1] !== 0 || r[3]);
 
@@ -974,10 +972,10 @@ function renderDuesPane(){
   const bal = boot.balances || [];
   $('balList').innerHTML = bal.length ? bal.map(b =>
     '<div class="lrow"><span class="li"><span class="ln">' + esc(b.customer) + '</span><br>' +
-    '<span class="lm">' + (b.advance > 0 ? 'paid ahead' : 'owes you') + '</span></span>' +
+    '<span class="lm">' + (b.advance > 0 ? 'you owe them change' : 'owes you') + '</span></span>' +
     '<span class="la">' + money(b.advance > 0 ? b.advance : b.due) +
-    '<small>' + (b.advance > 0 ? 'ADVANCE HELD' : 'DUE') + '</small></span></div>').join('')
-    : '<div class="empty">Nobody owes anything, and you are holding no advances.</div>';
+    '<small>' + (b.advance > 0 ? 'CHANGE OWED' : 'DUE') + '</small></span></div>').join('')
+    : '<div class="empty">Nobody owes anything, and you owe nobody change.</div>';
 
   const ent = boot.recent || [];
   $('entryList').innerHTML = ent.length ? ent.map(e =>
