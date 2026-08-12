@@ -40,7 +40,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .topbar .tbrow{display:flex;align-items:center;gap:12px;padding-bottom:8px}
 .tabs{display:flex;gap:2px}
 .tabs button{flex:1;background:none;border:none;color:#FAF5EA;opacity:.6;cursor:pointer;
-  padding:9px 6px;font-size:13.5px;font-weight:600;border-bottom:2.5px solid transparent}
+  padding:9px 4px;font-size:13px;font-weight:600;border-bottom:2.5px solid transparent}
 .tabs button[aria-selected=true]{opacity:1;border-bottom-color:#FAF5EA}
 .topbar .tbmain{display:flex;flex-direction:column;min-width:0}
 .topbar h1{margin:0;font-size:15px;font-weight:600;letter-spacing:.01em}
@@ -56,7 +56,6 @@ button,input,select,textarea{font:inherit;color:inherit}
   color:var(--ink-soft);margin:0 0 8px;
 }
 .help{font-size:13px;color:var(--ink-soft);margin:5px 0 0}
-.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
 /* ── fields ── */
 .field{margin-bottom:20px}
@@ -88,11 +87,10 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 }
 .seg button[aria-pressed=true]{border-color:var(--brand);background:var(--brand);color:#FAF5EA}
 .seg.tight button{min-width:70px;flex:0 0 auto}
-
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mini{font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px}
 
-/* ── the count rows (signature) ── */
+/* ── count rows ── */
 .denoms{background:var(--card);border:1.5px solid var(--rule);border-radius:9px;overflow:hidden}
 .drow{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 0;border-bottom:1px solid var(--rule)}
 .drow:last-child{border-bottom:none}
@@ -105,18 +103,18 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
   width:84px;flex:0 0 84px;text-align:right;color:var(--ink-soft)}
 .drow.filled .dt{color:var(--ink);font-weight:600}
 
-/* ── the tape (signature, carried over) ── */
+/* ── the tape ── */
 .tape{
   position:sticky;bottom:0;z-index:30;margin:0 -16px;
   background:var(--tape);border-top:1.5px solid var(--rule);
   padding:12px 16px calc(12px + env(safe-area-inset-bottom));
 }
-.tape .roll{max-height:34vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.tape .roll{max-height:32vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .tape .trow{display:flex;gap:10px;font-family:var(--mono);font-size:12.5px;padding:3px 0;
   font-variant-numeric:tabular-nums}
 .tape .trow span:first-child{flex:1;font-family:var(--sans);font-size:13px}
 .tape .trow.sub{color:var(--ink-soft);font-size:11.5px}
-.tape .trow.neg span:last-child{color:var(--ok)}
+.tape .trow.neg span:last-child{color:var(--alert)}
 .tape .rule{border-top:1px dashed var(--ink-soft);margin:8px 0;opacity:.5}
 .tape .total{display:flex;align-items:baseline;gap:10px;font-weight:700}
 .tape .total .amt{margin-left:auto;font-family:var(--mono);font-size:19px;font-variant-numeric:tabular-nums}
@@ -126,11 +124,14 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 /* ── cards ── */
 .card{background:var(--card);border:1.5px solid var(--rule);border-radius:9px;padding:14px;margin-bottom:12px}
 .card.locked{border-color:var(--ok);background:#F4F8F5}
-.card h3{margin:0 0 4px;font-size:15px}
-.stamp{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);letter-spacing:.03em}
+.card.warn{border-color:var(--alert);background:#FBF1EE}
+.card h3{margin:0 0 4px;font-size:15px;display:flex;align-items:baseline;gap:8px}
+.card h3 .amt{margin-left:auto;font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+.stamp{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);letter-spacing:.03em;margin:0}
 
-/* ── the reveal ── */
+/* ── reveal ── */
 .reveal{border:2px solid var(--brand);border-radius:10px;padding:16px;background:var(--card);margin-bottom:16px}
+.reveal.quiet{border-width:1.5px;border-color:var(--rule)}
 .reveal .rrow{display:flex;align-items:baseline;gap:10px;padding:5px 0;font-size:14px}
 .reveal .rrow span:last-child{margin-left:auto;font-family:var(--mono);font-weight:600;
   font-variant-numeric:tabular-nums}
@@ -139,10 +140,17 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .reveal .diff strong{font-size:15px}
 .reveal .diff .big{margin-left:auto;font-family:var(--mono);font-size:26px;font-weight:600;
   font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.reveal .verdict{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
-  margin-top:8px}
+.verdict{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-top:8px}
 .is-ok{color:var(--ok)}
 .is-off{color:var(--alert)}
+
+/* ── removals ── */
+.removal{border:1.5px solid var(--rule);border-radius:9px;padding:12px;margin-bottom:10px;background:var(--card)}
+.removal .rhd{display:flex;align-items:center;margin-bottom:9px}
+.removal .rhd span{font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-soft)}
+.x{border:none;background:none;color:var(--alert);font-size:20px;line-height:1;cursor:pointer;
+  padding:2px 6px;border-radius:5px;margin-left:auto}
 
 /* ── lists ── */
 .lrow{display:flex;align-items:center;gap:11px;background:var(--card);border:1.5px solid var(--rule);
@@ -202,7 +210,8 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
     <div class="tabs" id="tabs">
       <button data-v="count" aria-selected="true">Count</button>
       <button data-v="close" aria-selected="false">Close day</button>
-      <button data-v="dues" aria-selected="false">Dues book</button>
+      <button data-v="dues" aria-selected="false">Dues</button>
+      <button data-v="sales" aria-selected="false" class="hidden">Sales</button>
     </div>
   </div>
 
@@ -210,25 +219,12 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
   <div id="countPane">
     <div class="wrap">
       <div id="countMsg"></div>
-
-      <div id="countLocked" class="hidden">
-        <div class="card locked">
-          <h3>Drawer counted</h3>
-          <p class="stamp" id="lockStamp"></p>
-          <div class="reveal" style="margin:12px 0 0;border-width:1.5px;border-color:var(--rule)">
-            <div class="rrow"><span>Notes</span><span id="lkNotes">₹0</span></div>
-            <div class="rrow"><span>Coins</span><span id="lkCoins">₹0</span></div>
-            <div class="diff"><strong>Counted</strong><span class="big" id="lkTotal">₹0</span></div>
-          </div>
-        </div>
-        <p class="help">A locked count can't be edited. If it's wrong, close the day with the difference showing and write what happened — that record is worth more than a tidy number.</p>
-        <button class="btn wide" id="toCloseBtn" style="margin-top:16px">Go to Close day</button>
-      </div>
+      <div id="countCards"></div>
 
       <div id="countForm">
         <div class="field">
-          <p class="eyebrow">Count everything in the drawer</p>
-          <p class="help" style="margin:0 0 12px">Do this after you've taken out the cash for banking. Enter how many of each — not the value.</p>
+          <p class="eyebrow" id="countEyebrow">Morning count</p>
+          <p class="help" id="countIntro" style="margin:0 0 12px"></p>
           <div class="denoms" id="notesBox"></div>
         </div>
         <div class="field">
@@ -236,6 +232,11 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
           <div class="denoms" id="coinsBox"></div>
         </div>
         <div style="height:14px"></div>
+      </div>
+
+      <div id="countDone" class="hidden">
+        <p class="help" style="margin-bottom:16px">Both counts are locked for today.</p>
+        <button class="btn wide" id="toCloseBtn">Go to Close day</button>
       </div>
     </div>
 
@@ -255,20 +256,15 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
     <div class="wrap">
       <div id="closeMsg"></div>
 
-      <!-- waiting for the count -->
       <div id="needCount" class="hidden">
-        <div class="empty">
-          Count the drawer first.<br>
-          <span style="font-size:13px">The day's figures open up once the count is locked, so nobody can work backwards from the answer.</span>
-        </div>
+        <div class="empty" id="needCountText"></div>
         <button class="btn wide ghost" id="backToCountBtn">Go to Count</button>
       </div>
 
-      <!-- movements -->
       <div id="moveForm" class="hidden">
         <div class="field">
           <p class="eyebrow">Cash that came in</p>
-          <label class="lbl" for="mOpening">In the drawer this morning</label>
+          <label class="lbl" for="mOpening">Counted in the drawer this morning</label>
           <input id="mOpening" type="number" disabled>
           <p class="help" id="openingHelp"></p>
         </div>
@@ -280,77 +276,57 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
         <div class="field">
           <label class="lbl" for="mAdvance">Advances taken in cash</label>
           <input id="mAdvance" type="number" disabled>
-          <p class="help" id="advanceHelp">Added up from the Dues book.</p>
+          <p class="help" id="advanceHelp"></p>
         </div>
         <div class="field">
           <label class="lbl" for="mDues">Old dues collected in cash</label>
           <input id="mDues" type="number" disabled>
-          <p class="help" id="duesHelp">Added up from the Dues book.</p>
+          <p class="help" id="duesHelp"></p>
         </div>
         <div class="field">
-          <label class="lbl" for="mOther">Anything else put in</label>
-          <input id="mOther" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
-          <p class="help">Owner topping up the float, change bought from a shop.</p>
+          <label class="lbl" for="mTopup">Owner top-up</label>
+          <input id="mTopup" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          <input id="mTopupBy" type="text" style="margin-top:9px" placeholder="Who put it in">
+          <p class="help">Float added, or change bought from a shop.</p>
         </div>
 
         <div class="field">
           <p class="eyebrow">Cash that went out</p>
-          <label class="lbl" for="mRefund">Refunds paid in cash</label>
+          <label class="lbl" for="mRefund">Refunds and cancellations paid in cash</label>
           <input id="mRefund" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          <input id="mRefundReason" type="text" style="margin-top:9px" placeholder="What was refunded">
         </div>
         <div class="field">
-          <label class="lbl" for="mExpense">Paid out of the drawer</label>
-          <input id="mExpense" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
-          <p class="help">Milk, gas, small purchases. Keep the bills.</p>
-        </div>
-        <div class="field">
-          <label class="lbl" for="mBanked">Taken out for banking</label>
-          <input id="mBanked" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          <label class="lbl" for="mReturned">Advances returned in cash</label>
+          <input id="mReturned" type="number" disabled>
+          <p class="help" id="returnHelp"></p>
         </div>
 
         <div class="field">
-          <p class="eyebrow">For the revenue check</p>
-          <label class="lbl" for="mUpi">UPI collected today</label>
-          <input id="mUpi" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
-          <p class="help">Doesn't touch the drawer. Recorded so you can check it against the UPI app separately.</p>
-        </div>
-        <div class="field">
-          <label class="lbl" for="mPos">POS total sales for the day</label>
-          <input id="mPos" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          <label class="lbl">Cash taken out of the drawer</label>
+          <div id="removalList"></div>
+          <button class="btn ghost wide small" id="addRemovalBtn">Add a removal</button>
+          <p class="help">Banking, owner draw, anything at all. Every removal needs a reason and a name — an unrecorded removal shows up as a shortage and someone gets blamed for it.</p>
         </div>
         <div style="height:14px"></div>
       </div>
 
-      <!-- reveal -->
       <div id="revealBox" class="hidden">
         <div class="reveal">
-          <p class="eyebrow" style="margin-bottom:10px">The check</p>
+          <p class="eyebrow" style="margin-bottom:10px">The day's check</p>
           <div class="rrow"><span>Should be in the drawer</span><span id="rvExpected">₹0</span></div>
           <div class="rrow"><span>Actually counted</span><span id="rvCounted">₹0</span></div>
-          <div class="diff">
-            <strong>Difference</strong>
-            <span class="big" id="rvDiff">₹0</span>
-          </div>
+          <div class="diff"><strong>Difference</strong><span class="big" id="rvDiff">₹0</span></div>
           <p class="verdict" id="rvVerdict"></p>
         </div>
 
         <div class="field" id="reasonField">
           <label class="lbl" for="reason">What do you think happened?</label>
           <textarea id="reason" placeholder="Write it tonight, while you still remember."></textarea>
-          <p class="help" id="reasonHelp">Needed before the day can close.</p>
-        </div>
-
-        <div class="reveal" style="border-width:1.5px;border-color:var(--rule)">
-          <p class="eyebrow" style="margin-bottom:10px">Revenue against the POS</p>
-          <div class="rrow"><span>Cash sales</span><span id="rvCash">₹0</span></div>
-          <div class="rrow"><span>UPI collected</span><span id="rvUpi">₹0</span></div>
-          <div class="rrow"><span>POS total</span><span id="rvPos">₹0</span></div>
-          <div class="diff"><strong>Gap</strong><span class="big" id="rvSalesGap">₹0</span></div>
-          <p class="help" id="rvSalesNote" style="margin-top:8px"></p>
+          <p class="help">Needed before the day can close. "No idea, will check the bills tomorrow" is a fine answer.</p>
         </div>
       </div>
 
-      <!-- closed -->
       <div id="closedBox" class="hidden">
         <div class="card locked">
           <h3>Day closed</h3>
@@ -365,6 +341,13 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
           <p class="eyebrow" style="margin-bottom:6px">What was written</p>
           <p style="margin:0;font-size:14px" id="czReason"></p>
         </div>
+        <div class="reveal quiet">
+          <p class="eyebrow" style="margin-bottom:10px">Whose money is in the drawer</p>
+          <div class="rrow"><span>Counted</span><span id="czOwnCounted">₹0</span></div>
+          <div class="rrow"><span>Advances you are holding</span><span id="czHeld">₹0</span></div>
+          <div class="diff"><strong>The business's cash</strong><span class="big" id="czOwn">₹0</span></div>
+          <p class="help" id="czFree"></p>
+        </div>
       </div>
     </div>
 
@@ -373,14 +356,14 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
         <p class="toggle">The day's cash</p>
         <div class="roll" id="closeRoll"></div>
         <div class="rule"></div>
-        <div class="total"><span id="closeTotalLbl">Should be in the drawer</span><span class="amt" id="closeTotal">₹0.00</span></div>
+        <div class="total"><span>Should be in the drawer</span><span class="amt" id="closeTotal">₹0.00</span></div>
         <button class="btn wide" id="checkBtn" style="margin-top:12px">Check the day</button>
         <button class="btn wide hidden" id="closeDayBtn" style="margin-top:12px">Close the day</button>
       </div>
     </div>
   </div>
 
-  <!-- ── DUES BOOK ── -->
+  <!-- ── DUES ── -->
   <div id="duesPane" class="hidden">
     <div class="wrap">
       <div id="duesMsg"></div>
@@ -393,18 +376,19 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
       </div>
 
       <div class="field">
-        <label class="lbl">What happened</label>
-        <select id="dType">
+        <label class="lbl" for="dEvent">What happened</label>
+        <select id="dEvent">
           <option value="advance_taken">They paid in advance</option>
-          <option value="advance_used">We delivered what they'd paid for</option>
+          <option value="advance_delivered">We gave them what they'd paid for</option>
+          <option value="advance_returned">We gave their advance back in cash</option>
           <option value="credit_given">They took goods without paying</option>
-          <option value="payment_received">They settled what they owed</option>
+          <option value="dues_collected">They settled what they owed</option>
         </select>
-        <p class="help" id="dTypeHelp"></p>
+        <p class="help" id="dEventHelp"></p>
       </div>
 
-      <div class="field" id="dMethodField">
-        <label class="lbl">How did the money come in</label>
+      <div class="field hidden" id="dMethodField">
+        <label class="lbl">How the money came in</label>
         <div class="seg tight" id="dMethod">
           <button type="button" data-v="cash" aria-pressed="true">Cash</button>
           <button type="button" data-v="upi" aria-pressed="false">UPI</button>
@@ -425,7 +409,6 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
       <button class="btn wide" id="dSaveBtn">Add to the dues book</button>
 
       <div style="height:26px"></div>
-
       <p class="eyebrow">Outstanding right now</p>
       <div id="balList"></div>
 
@@ -433,6 +416,43 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
       <p class="eyebrow">Latest entries</p>
       <div id="entryList"></div>
       <p class="help" style="margin-bottom:24px">Entries can't be edited or deleted. To fix one, add the opposite entry with a note.</p>
+    </div>
+  </div>
+
+  <!-- ── SALES TALLY (manager) ── -->
+  <div id="salesPane" class="hidden">
+    <div class="wrap">
+      <div id="salesMsg"></div>
+      <p class="eyebrow">Tally the day's sales</p>
+      <p class="help" style="margin:0 0 18px">Each channel is checked against its own source. Never against the total — a cash shortage and a bank overage of the same size would cancel out and you'd see a clean day.</p>
+
+      <div class="field">
+        <label class="lbl" for="sDate">Date</label>
+        <input id="sDate" type="date">
+      </div>
+      <div class="field">
+        <label class="lbl" for="sPosCash">POS cash tender</label>
+        <input id="sPosCash" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="grid2 field">
+        <div><span class="mini">POS card</span><input id="sPosCard" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+        <div><span class="mini">POS UPI</span><input id="sPosUpi" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="sBank">Actually credited to the bank</label>
+        <input id="sBank" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+        <p class="help">From the bank or UPI app, not from the POS.</p>
+      </div>
+
+      <div class="reveal quiet" id="salesPreview">
+        <div class="rrow"><span>Cash recorded in the ledger today</span><span id="spCash">—</span></div>
+        <div class="rrow"><span>POS says cash was</span><span id="spPos">—</span></div>
+        <div class="diff"><strong>Cash gap</strong><span class="big" id="spGap">—</span></div>
+        <p class="help" id="spNote" style="margin-top:8px"></p>
+      </div>
+
+      <button class="btn wide" id="sSaveBtn">Save the tally</button>
+      <p class="help" style="margin-bottom:24px">The bank gap is worked out on the Sales Tally tab of the sheet.</p>
     </div>
   </div>
 </section>
@@ -460,25 +480,29 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw4h-ROQl4gGKNhK4cN0Zxd
 const SESSION_KEY = 'lc_cash_session';
 const SESSION_HOURS = 12;
 
+/* key prefix matters: note 20 and coin 20 are different lines */
 const NOTES = [
-  {v:500, c:'#8E8B7A'}, {v:200, c:'#D79A3C'}, {v:100, c:'#9585B0'},
-  {v:50,  c:'#5A9FB5'}, {v:20,  c:'#A9A94F'}, {v:10,  c:'#A57C5B'}
+  {k:'d500', v:500, c:'#8E8B7A'}, {k:'d200', v:200, c:'#D79A3C'}, {k:'d100', v:100, c:'#9585B0'},
+  {k:'d50',  v:50,  c:'#5A9FB5'}, {k:'d20',  v:20,  c:'#A9A94F'}, {k:'d10',  v:10,  c:'#A57C5B'}
 ];
 const COINS = [
-  {v:20, c:'#9A9186'}, {v:10, c:'#9A9186'}, {v:5, c:'#9A9186'},
-  {v:2,  c:'#9A9186'}, {v:1,  c:'#9A9186'}
+  {k:'c20', v:20, c:'#9A9186'}, {k:'c10', v:10, c:'#9A9186'}, {k:'c5', v:5, c:'#9A9186'},
+  {k:'c2',  v:2,  c:'#9A9186'}, {k:'c1',  v:1,  c:'#9A9186'}
 ];
+const ALL_DENOMS = NOTES.concat(COINS);
 
-const TYPE_HELP = {
-  advance_taken:    'Cash or UPI came in now for something you will hand over later. It is their money until you do.',
-  advance_used:     'You delivered it. No money moves today — this just releases the advance.',
-  credit_given:     'They walked out without paying. No money moves today.',
-  payment_received: 'They cleared an old balance.'
+const EVENT_HELP = {
+  advance_taken:     'Money in now for something you hand over later. It stays theirs until you do.',
+  advance_delivered: 'You handed over what they had already paid for. No money moves today.',
+  advance_returned:  'They cancelled and you gave the cash back. This one leaves the drawer.',
+  credit_given:      'They walked out without paying. No money moves today.',
+  dues_collected:    'They cleared an old balance.'
 };
-const MONEY_IN = {advance_taken:true, payment_received:true};
+const MONEY_IN = {advance_taken: true, dues_collected: true};
 
-let boot = null;        // bootstrap payload
-let counts = {};        // denomination -> count string
+let boot = null;
+let counts = {};
+let removals = [];
 
 /* ── helpers ── */
 const $ = id => document.getElementById(id);
@@ -486,6 +510,7 @@ const money = n => '₹' + (Number(n)||0).toLocaleString('en-IN',{minimumFractio
 const money0 = n => '₹' + (Number(n)||0).toLocaleString('en-IN',{maximumFractionDigits:0});
 const r2 = n => Math.round((Number(n)||0)*100)/100;
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const signed = n => (n > 0 ? '+' : '') + money(n);
 
 function notice(el, text, kind){
   el.innerHTML = text ? '<div class="msg ' + (kind||'err') + '">' + text + '</div>' : '';
@@ -552,7 +577,7 @@ async function doLogin(){
   }
 }
 
-/* ═══════════ START ═══════════ */
+/* ═══════════ START / REFRESH ═══════════ */
 function start(r){
   boot = r;
   $('loginView').classList.add('hidden');
@@ -560,96 +585,157 @@ function start(r){
   $('appView').classList.remove('hidden');
   $('whoLabel').textContent = r.user.name;
   $('branchLabel').textContent = (r.user.branch || '') + ' · ' + r.todayLabel;
+  const mgr = r.user.role === 'manager' || r.user.role === 'owner';
+  $('tabs').querySelector('[data-v="sales"]').classList.toggle('hidden', !mgr);
+  if (mgr && !$('sDate').value) $('sDate').value = r.today;
 
   buildDenoms();
+  refresh();
+}
+
+function refresh(){
   renderCountPane();
   renderClosePane();
   renderDuesPane();
+  renderSalesPane();
+}
+
+/** Which count is due next, or null if both are locked. */
+function activeCount(){
+  const d = boot.day || {};
+  if (!d.opening) return 'Opening';
+  if (!d.closing) return 'Closing';
+  return null;
 }
 
 /* ═══════════ COUNT ═══════════ */
 function buildDenoms(){
   const row = d =>
-    '<div class="drow" data-d="' + d.v + '">' +
+    '<div class="drow" data-k="' + d.k + '">' +
       '<span class="swatch" style="background:' + d.c + '"></span>' +
       '<span class="dv">' + d.v + '</span>' +
       '<span class="dx">×</span>' +
-      '<input type="number" inputmode="numeric" min="0" step="1" data-d="' + d.v + '" placeholder="0">' +
-      '<span class="dt" data-t="' + d.v + '">—</span>' +
+      '<input type="number" inputmode="numeric" min="0" step="1" data-k="' + d.k + '" placeholder="0">' +
+      '<span class="dt" data-t="' + d.k + '">—</span>' +
     '</div>';
   $('notesBox').innerHTML = NOTES.map(row).join('');
   $('coinsBox').innerHTML = COINS.map(row).join('');
   document.querySelectorAll('.drow input').forEach(el => {
-    el.oninput = () => { counts[el.dataset.d] = el.value; renderCountTape(); };
+    el.oninput = () => { counts[el.dataset.k] = el.value; renderCountTape(); };
   });
   renderCountTape();
 }
 
-function countedTotal(){
-  return NOTES.concat(COINS).reduce((s,d) => s + d.v * (parseInt(counts[d.v],10) || 0), 0);
+function clearCounts(){
+  counts = {};
+  document.querySelectorAll('.drow input').forEach(el => { el.value = ''; });
+  renderCountTape();
 }
-function notesTotal(){
-  return NOTES.reduce((s,d) => s + d.v * (parseInt(counts[d.v],10) || 0), 0);
-}
+
+const countedTotal = () => ALL_DENOMS.reduce((s,d) => s + d.v * (parseInt(counts[d.k],10) || 0), 0);
 
 function renderCountTape(){
   const rows = [];
   [['Notes', NOTES], ['Coins', COINS]].forEach(([lbl, set]) => {
-    const hits = set.filter(d => (parseInt(counts[d.v],10) || 0) > 0);
+    const hits = set.filter(d => (parseInt(counts[d.k],10) || 0) > 0);
     if (!hits.length) return;
     rows.push('<div class="trow sub"><span>' + lbl + '</span><span></span></div>');
     hits.forEach(d => {
-      const n = parseInt(counts[d.v],10);
+      const n = parseInt(counts[d.k],10);
       rows.push('<div class="trow"><span>' + d.v + ' × ' + n + '</span><span>' + money0(d.v*n) + '</span></div>');
     });
   });
   $('countRoll').innerHTML = rows.length ? rows.join('')
     : '<div class="trow sub"><span>Nothing counted yet.</span></div>';
 
-  // live line totals
-  NOTES.concat(COINS).forEach(d => {
-    const n = parseInt(counts[d.v],10) || 0;
-    const el = document.querySelector('[data-t="' + d.v + '"]');
-    if (el) el.textContent = n > 0 ? money0(d.v*n) : '—';
-    const row = document.querySelector('.drow[data-d="' + d.v + '"]');
+  ALL_DENOMS.forEach(d => {
+    const n = parseInt(counts[d.k],10) || 0;
+    const t = document.querySelector('[data-t="' + d.k + '"]');
+    if (t) t.textContent = n > 0 ? money0(d.v*n) : '—';
+    const row = document.querySelector('.drow[data-k="' + d.k + '"]');
     if (row) row.classList.toggle('filled', n > 0);
   });
-
   $('countTotal').textContent = money(countedTotal());
 }
 
 function renderCountPane(){
-  const c = boot.day && boot.day.count;
-  $('countForm').classList.toggle('hidden', !!c);
-  $('countTape').classList.toggle('hidden', !!c);
-  $('countLocked').classList.toggle('hidden', !c);
-  if (c){
-    $('lockStamp').textContent = 'Locked ' + c.at + ' by ' + c.by;
-    $('lkNotes').textContent = money(c.notesTotal);
-    $('lkCoins').textContent = money(c.coinsTotal);
-    $('lkTotal').textContent = money(c.total);
+  const d = boot.day || {}, active = activeCount();
+  const cards = [];
+
+  if (d.opening){
+    const ov = d.opening.overnightVariance;
+    cards.push(
+      '<div class="card locked"><h3>Morning count<span class="amt">' + money(d.opening.total) + '</span></h3>' +
+      '<p class="stamp">Locked ' + esc(d.opening.at) + ' by ' + esc(d.opening.by) + '</p></div>');
+
+    if (ov !== null && ov !== undefined){
+      const off = Math.abs(ov) > 0.001;
+      cards.push(
+        '<div class="card ' + (off ? 'warn' : 'locked') + '">' +
+        '<h3>Against last night<span class="amt ' + (off ? 'is-off' : 'is-ok') + '">' + signed(ov) + '</span></h3>' +
+        '<p class="stamp">Locked up at ' + money(d.opening.previousClosing) + '</p>' +
+        '<p class="help" style="margin-top:8px">' +
+        (off
+          ? 'Nothing happens to the drawer overnight, so this should be zero. Either one of the two counts is wrong, or someone was in the drawer. Tell the manager before you open.'
+          : 'Matches exactly. Nothing moved overnight.') +
+        '</p></div>');
+    }
+  }
+
+  if (d.closing){
+    cards.push(
+      '<div class="card locked"><h3>Closing count<span class="amt">' + money(d.closing.total) + '</span></h3>' +
+      '<p class="stamp">Locked ' + esc(d.closing.at) + ' by ' + esc(d.closing.by) + '</p></div>');
+  }
+
+  $('countCards').innerHTML = cards.join('');
+  $('countForm').classList.toggle('hidden', !active);
+  $('countTape').classList.toggle('hidden', !active);
+  $('countDone').classList.toggle('hidden', !!active);
+
+  if (active === 'Opening'){
+    $('countEyebrow').textContent = 'Morning count';
+    $('countIntro').textContent = boot.previousClosing
+      ? 'Count the drawer before you open. It gets compared against what was locked up last night, and the two should match exactly.'
+      : 'First count. Everything from here on is measured against it.';
+    $('lockBtn').dataset.label = 'Lock the morning count';
+    $('lockBtn').innerHTML = 'Lock the morning count';
+  } else if (active === 'Closing'){
+    $('countEyebrow').textContent = 'Closing count';
+    $('countIntro').textContent = 'Count what is left after you have taken out the cash for banking.';
+    $('lockBtn').dataset.label = 'Lock the closing count';
+    $('lockBtn').innerHTML = 'Lock the closing count';
   }
 }
 
-$('lockBtn').dataset.label = 'Lock this count';
 $('lockBtn').onclick = async () => {
+  const type = activeCount();
+  if (!type) return;
   const total = countedTotal();
-  const anyEntered = NOTES.concat(COINS).some(d => counts[d.v] !== undefined && counts[d.v] !== '');
-  if (!anyEntered) return notice($('countMsg'), 'Count the drawer before locking. If the drawer really is empty, enter 0 against any one line.');
-  if (!confirm('Lock the count at ' + money(total) + '?\n\nIt cannot be changed afterwards. The day\'s figures open up next.')) return;
+  const anyEntered = ALL_DENOMS.some(d => counts[d.k] !== undefined && counts[d.k] !== '');
+  if (!anyEntered) return notice($('countMsg'), 'Count the drawer before locking. If it really is empty, enter 0 on any one line.');
+  const what = type === 'Opening' ? 'morning' : 'closing';
+  if (!confirm('Lock the ' + what + ' count at ' + money(total) + '?\n\nIt cannot be changed afterwards.')) return;
+
   notice($('countMsg'), '');
   busy($('lockBtn'), true, 'Locking…');
   try{
     const payload = {};
-    NOTES.concat(COINS).forEach(d => { payload['d' + d.v] = parseInt(counts[d.v],10) || 0; });
-    const r = await api('saveCount', {counts:payload, total:total});
+    ALL_DENOMS.forEach(d => { payload[d.k] = parseInt(counts[d.k],10) || 0; });
+    const r = await api('saveCount', {type:type, counts:payload, total:total});
     busy($('lockBtn'), false);
     if (!r.ok) return notice($('countMsg'), r.error);
-    boot.day = r.day;
-    boot.opening = r.opening;
-    renderCountPane();
-    renderClosePane();
-    notice($('countMsg'), 'Count locked at ' + money(r.day.count.total) + '.', 'ok');
+    boot = r;
+    clearCounts();
+    refresh();
+    window.scrollTo(0, 0);
+
+    const ov = boot.day.opening ? boot.day.opening.overnightVariance : null;
+    if (type === 'Opening' && ov !== null && ov !== undefined && Math.abs(ov) > 0.001){
+      notice($('countMsg'), 'The drawer is ' + signed(ov) + ' against last night. Tell the manager before you open.', 'err');
+    } else {
+      notice($('countMsg'), 'Locked at ' + money(total) + '.', 'ok');
+    }
   }catch(err){
     busy($('lockBtn'), false);
     notice($('countMsg'), err.message + ' Nothing was saved.');
@@ -660,102 +746,151 @@ $('toCloseBtn').onclick = () => switchTab('close');
 $('backToCountBtn').onclick = () => switchTab('count');
 
 /* ═══════════ CLOSE DAY ═══════════ */
-const MOVE_FIELDS = [
-  ['mSales','sales'], ['mOther','other'], ['mRefund','refund'],
-  ['mExpense','expense'], ['mBanked','banked'], ['mUpi','upi'], ['mPos','pos']
-];
-
 function renderClosePane(){
   const d = boot.day || {};
-  const counted = d.count ? d.count.total : 0;
+  const ready = !!(d.opening && d.closing);
+  const locked = !!d.movements;
   const closed = !!d.close;
 
-  $('needCount').classList.toggle('hidden', !!d.count);
-  $('moveForm').classList.toggle('hidden', !d.count || closed || !!d.movements);
-  $('revealBox').classList.toggle('hidden', !d.movements || closed);
+  $('needCount').classList.toggle('hidden', ready);
+  $('moveForm').classList.toggle('hidden', !ready || locked);
+  $('revealBox').classList.toggle('hidden', !locked || closed);
   $('closedBox').classList.toggle('hidden', !closed);
-  $('closeTape').classList.toggle('hidden', !d.count || closed);
-  $('checkBtn').classList.toggle('hidden', !!d.movements);
-  $('closeDayBtn').classList.toggle('hidden', !d.movements || closed);
+  $('closeTape').classList.toggle('hidden', !ready || closed);
+  $('checkBtn').classList.toggle('hidden', locked);
+  $('closeDayBtn').classList.toggle('hidden', !locked || closed);
 
-  if (!d.count) return;
+  if (!ready){
+    $('needCountText').innerHTML = !d.opening
+      ? 'Count the drawer this morning first.<br><span style="font-size:13px">The day is measured from the morning count.</span>'
+      : 'Count the drawer at closing first.<br><span style="font-size:13px">The day\'s figures open once the count is locked, so nobody can work backwards from the answer.</span>';
+    return;
+  }
 
-  $('mOpening').value = boot.opening;
-  $('openingHelp').textContent = boot.openingFrom
-    ? 'Left in the drawer when ' + boot.openingFrom + ' closed.'
-    : 'First day — this is the starting figure your owner set.';
+  $('mOpening').value = d.opening.total;
+  $('openingHelp').textContent = 'Counted by ' + d.opening.by + ' at ' + d.opening.at + '.';
   $('mAdvance').value = boot.derived.advancesCash;
   $('mDues').value = boot.derived.duesCash;
-  $('advanceHelp').textContent = boot.derived.advanceCount
-    ? 'From ' + boot.derived.advanceCount + ' entr' + (boot.derived.advanceCount===1?'y':'ies') + ' in the Dues book.'
-    : 'Nothing in the Dues book today.';
-  $('duesHelp').textContent = boot.derived.duesCount
-    ? 'From ' + boot.derived.duesCount + ' entr' + (boot.derived.duesCount===1?'y':'ies') + ' in the Dues book.'
-    : 'Nothing in the Dues book today.';
+  $('mReturned').value = boot.derived.advancesReturned;
+  $('advanceHelp').textContent = fromLedger(boot.derived.advanceCount);
+  $('duesHelp').textContent = fromLedger(boot.derived.duesCount);
+  $('returnHelp').textContent = fromLedger(boot.derived.returnCount);
 
-  if (d.movements) fillReveal(d);
+  if (!locked && !removals.length) addRemoval();
+  if (!locked) renderRemovals();
+
+  if (locked) fillReveal(d);
   if (closed) fillClosed(d);
   renderCloseTape();
 }
 
-function moveValues(){
-  const v = {};
-  MOVE_FIELDS.forEach(([id,key]) => { v[key] = r2($(id).value); });
-  v.opening = r2(boot.opening);
-  v.advance = r2(boot.derived.advancesCash);
-  v.dues    = r2(boot.derived.duesCash);
-  return v;
+function fromLedger(n){
+  return n ? 'From ' + n + ' entr' + (n === 1 ? 'y' : 'ies') + ' in the dues book.'
+           : 'Nothing in the dues book today.';
 }
-function expectedFrom(v){
-  return r2(v.opening + v.sales + v.advance + v.dues + v.other - v.refund - v.expense - v.banked);
+
+/* ── removals ── */
+function addRemoval(){ removals.push({amount:'', reason:'', byWhom:''}); }
+
+function renderRemovals(){
+  $('removalList').innerHTML = removals.map((rm, i) =>
+    '<div class="removal">' +
+      '<div class="rhd"><span>Removal ' + (i+1) + '</span>' +
+        (removals.length > 1 ? '<button class="x" data-rm="' + i + '" aria-label="Remove">×</button>' : '') +
+      '</div>' +
+      '<div class="grid2" style="margin-bottom:10px">' +
+        '<div><span class="mini">Amount</span><input type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" data-i="' + i + '" data-f="amount" value="' + esc(rm.amount) + '"></div>' +
+        '<div><span class="mini">Taken by</span><input type="text" placeholder="Name" data-i="' + i + '" data-f="byWhom" value="' + esc(rm.byWhom) + '"></div>' +
+      '</div>' +
+      '<span class="mini">Reason</span>' +
+      '<input type="text" placeholder="Banked, owner draw, paid the milkman" data-i="' + i + '" data-f="reason" value="' + esc(rm.reason) + '">' +
+    '</div>').join('');
+
+  $('removalList').querySelectorAll('input').forEach(el => {
+    el.oninput = () => {
+      removals[+el.dataset.i][el.dataset.f] = el.value;
+      if (el.dataset.f === 'amount') renderCloseTape();
+    };
+  });
+  $('removalList').querySelectorAll('[data-rm]').forEach(b => {
+    b.onclick = () => { removals.splice(+b.dataset.rm, 1); renderRemovals(); renderCloseTape(); };
+  });
 }
+
+$('addRemovalBtn').onclick = () => { addRemoval(); renderRemovals(); };
+
+/* ── the day's arithmetic ── */
+function movementValues(){
+  const d = boot.day;
+  return {
+    opening:  r2(d.opening.total),
+    sales:    r2($('mSales').value),
+    advance:  r2(boot.derived.advancesCash),
+    dues:     r2(boot.derived.duesCash),
+    topup:    r2($('mTopup').value),
+    refund:   r2($('mRefund').value),
+    returned: r2(boot.derived.advancesReturned),
+    removed:  r2(removals.reduce((s, rm) => s + (Number(rm.amount) || 0), 0))
+  };
+}
+const expectedFrom = v => r2(v.opening + v.sales + v.advance + v.dues + v.topup - v.refund - v.returned - v.removed);
 
 function renderCloseTape(){
   const d = boot.day || {};
+  if (!d.opening || !d.closing) return;
+
   if (d.movements){
-    $('closeTotalLbl').textContent = 'Should be in the drawer';
     $('closeTotal').textContent = money(d.movements.expected);
-    $('closeRoll').innerHTML = '<div class="trow sub"><span>Figures locked. Read the check above.</span></div>';
+    $('closeRoll').innerHTML = '<div class="trow sub"><span>Figures locked. The check is above.</span></div>';
     return;
   }
-  const v = moveValues();
+  const v = movementValues();
   const rows = [
-    ['In the drawer this morning', v.opening, false],
-    ['Cash sales', v.sales, false],
-    ['Advances taken', v.advance, false],
-    ['Dues collected', v.dues, false],
-    ['Anything else in', v.other, false],
-    ['Refunds paid', v.refund, true],
-    ['Paid out of the drawer', v.expense, true],
-    ['Taken out for banking', v.banked, true]
-  ].filter(r => r[1] !== 0 || r[0] === 'In the drawer this morning' || r[0] === 'Cash sales');
+    ['In the drawer this morning', v.opening, false, true],
+    ['Cash sales', v.sales, false, true],
+    ['Advances taken', v.advance, false, false],
+    ['Dues collected', v.dues, false, false],
+    ['Owner top-up', v.topup, false, false],
+    ['Refunds paid', v.refund, true, false],
+    ['Advances returned', v.returned, true, false],
+    ['Taken out of the drawer', v.removed, true, false]
+  ].filter(r => r[1] !== 0 || r[3]);
 
   $('closeRoll').innerHTML = rows.map(([lbl, amt, out]) =>
     '<div class="trow' + (out ? ' neg' : '') + '"><span>' + lbl + '</span><span>' +
     (out ? '− ' : '') + money(amt) + '</span></div>').join('');
-  $('closeTotalLbl').textContent = 'Should be in the drawer';
   $('closeTotal').textContent = money(expectedFrom(v));
 }
 
-MOVE_FIELDS.forEach(([id]) => {
-  const el = $(id);
-  if (el) el.addEventListener('input', renderCloseTape);
-});
+['mSales','mTopup','mRefund'].forEach(id => $(id).addEventListener('input', renderCloseTape));
 
 $('checkBtn').dataset.label = 'Check the day';
 $('checkBtn').onclick = async () => {
-  const v = moveValues();
   if ($('mSales').value === '') return notice($('closeMsg'), 'Enter the cash sales figure from the POS. If it really was zero, type 0.');
-  if ($('mPos').value === '') return notice($('closeMsg'), 'Enter the POS total for the day.');
-  if (!confirm('Check the day?\n\nThese figures lock now, and the difference appears. You cannot go back and adjust them.')) return;
+
+  const bad = removals.find(rm => (Number(rm.amount) || 0) > 0 && (!rm.reason.trim() || !rm.byWhom.trim()));
+  if (bad) return notice($('closeMsg'), 'Every removal needs both a reason and a name. Cash that leaves without a record shows up as a shortage and someone gets blamed for it.');
+  if (r2($('mTopup').value) > 0 && !$('mTopupBy').value.trim()) return notice($('closeMsg'), 'Say who put the top-up in.');
+
+  if (!confirm('Check the day?\n\nThese figures lock now and the difference appears. You cannot go back and adjust them.')) return;
+
   notice($('closeMsg'), '');
   busy($('checkBtn'), true, 'Checking…');
   try{
-    const r = await api('saveMovements', v);
+    const r = await api('saveMovements', {
+      sales:  r2($('mSales').value),
+      topup:  r2($('mTopup').value),
+      topupBy: $('mTopupBy').value.trim(),
+      refund: r2($('mRefund').value),
+      refundReason: $('mRefundReason').value.trim(),
+      removals: removals
+        .filter(rm => (Number(rm.amount) || 0) > 0)
+        .map(rm => ({amount: r2(rm.amount), reason: rm.reason.trim(), byWhom: rm.byWhom.trim()}))
+    });
     busy($('checkBtn'), false);
     if (!r.ok) return notice($('closeMsg'), r.error);
-    boot.day = r.day;
-    renderClosePane();
+    boot = r;
+    refresh();
     window.scrollTo(0, 0);
   }catch(err){
     busy($('checkBtn'), false);
@@ -764,50 +899,41 @@ $('checkBtn').onclick = async () => {
 };
 
 function fillReveal(d){
-  const m = d.movements, counted = d.count.total;
-  const diff = r2(counted - m.expected);
-  const off  = Math.abs(diff) > boot.tolerance;
+  const expected = d.movements.expected, counted = d.closing.total;
+  const diff = r2(counted - expected);
+  const off = Math.abs(diff) > boot.tolerance;
 
-  $('rvExpected').textContent = money(m.expected);
+  $('rvExpected').textContent = money(expected);
   $('rvCounted').textContent  = money(counted);
-  $('rvDiff').textContent     = (diff > 0 ? '+' : '') + money(diff);
+  $('rvDiff').textContent     = signed(diff);
   $('rvDiff').className = 'big ' + (off ? 'is-off' : 'is-ok');
   $('rvVerdict').className = 'verdict ' + (off ? 'is-off' : 'is-ok');
   $('rvVerdict').textContent = diff === 0 ? 'Exactly right'
-    : off ? (diff < 0 ? 'Short — money is missing' : 'Over — there is more than there should be')
+    : off ? (diff < 0 ? 'Short — money is missing' : 'Over — more than there should be')
           : 'Within tolerance';
-
   $('reasonField').classList.toggle('hidden', !off);
-
-  const gap = r2(m.sales + m.upi - m.pos);
-  $('rvCash').textContent = money(m.sales);
-  $('rvUpi').textContent  = money(m.upi);
-  $('rvPos').textContent  = money(m.pos);
-  $('rvSalesGap').textContent = (gap > 0 ? '+' : '') + money(gap);
-  $('rvSalesGap').className = 'big ' + (Math.abs(gap) > boot.tolerance ? 'is-off' : 'is-ok');
-  $('rvSalesNote').textContent = Math.abs(gap) <= boot.tolerance
-    ? 'Cash and UPI together account for the POS total. Card sales, if any, will show as a gap here.'
-    : 'Check the UPI app against the UPI figure before you assume the cash is at fault.';
 }
 
 $('closeDayBtn').dataset.label = 'Close the day';
 $('closeDayBtn').onclick = async () => {
-  const d = boot.day, diff = r2(d.count.total - d.movements.expected);
+  const d = boot.day;
+  const diff = r2(d.closing.total - d.movements.expected);
   const off = Math.abs(diff) > boot.tolerance;
   const reason = $('reason').value.trim();
-  if (off && reason.length < 4) return notice($('closeMsg'), 'Write what you think happened before closing. Even "no idea, will check the bills tomorrow" is worth recording.');
+  if (off && reason.length < 4) return notice($('closeMsg'), 'Write what you think happened before closing. "No idea, will check the bills tomorrow" is a fine answer.');
+
   notice($('closeMsg'), '');
   busy($('closeDayBtn'), true, 'Closing…');
   try{
     const r = await api('closeDay', {reason:reason});
     busy($('closeDayBtn'), false);
     if (!r.ok) return notice($('closeMsg'), r.error);
-    boot.day = r.day;
+    boot = r;
+    refresh();
     showDone('Day closed',
-      'Counted ' + money(d.count.total) + ' against ' + money(d.movements.expected) + ' expected.<br>' +
-      (diff === 0 ? 'Exactly right.' :
-        (diff < 0 ? 'Short by ' : 'Over by ') + money(Math.abs(diff)) + '.') +
-      '<br>Tomorrow opens with ' + money(d.count.total) + '.');
+      'Counted ' + money(d.closing.total) + ' against ' + money(d.movements.expected) + ' expected.<br>' +
+      (diff === 0 ? 'Exactly right.' : (diff < 0 ? 'Short by ' : 'Over by ') + money(Math.abs(diff)) + '.') +
+      '<br>Tomorrow opens against ' + money(d.closing.total) + '.');
   }catch(err){
     busy($('closeDayBtn'), false);
     notice($('closeMsg'), err.message + ' Nothing was saved.');
@@ -815,20 +941,26 @@ $('closeDayBtn').onclick = async () => {
 };
 
 function fillClosed(d){
-  const diff = r2(d.count.total - d.movements.expected);
+  const diff = r2(d.closing.total - d.movements.expected);
+  const own = r2(d.closing.total - boot.advancesHeld);
   $('closedStamp').textContent = 'Closed ' + d.close.at + ' by ' + d.close.by;
-  $('czCounted').textContent  = money(d.count.total);
+  $('czCounted').textContent  = money(d.closing.total);
   $('czExpected').textContent = money(d.movements.expected);
-  $('czDiff').textContent = (diff > 0 ? '+' : '') + money(diff);
+  $('czDiff').textContent = signed(diff);
   $('czDiff').className = 'big ' + (Math.abs(diff) > boot.tolerance ? 'is-off' : 'is-ok');
   $('czReasonBox').classList.toggle('hidden', !d.close.reason);
   $('czReason').textContent = d.close.reason || '';
+
+  $('czOwnCounted').textContent = money(d.closing.total);
+  $('czHeld').textContent = money(boot.advancesHeld);
+  $('czOwn').textContent = money(own);
+  $('czFree').textContent = 'Less the ' + money(boot.float) + ' float, that leaves ' +
+    money(r2(own - boot.float)) + ' you could actually take out.';
 }
 
-/* ═══════════ DUES BOOK ═══════════ */
+/* ═══════════ DUES ═══════════ */
 function renderDuesPane(){
-  const sel = $('dCustomer');
-  const keep = sel.value;
+  const sel = $('dCustomer'), keep = sel.value;
   sel.innerHTML = '<option value="">Pick a customer</option>' +
     (boot.customers||[]).map(c => '<option value="' + esc(c) + '">' + esc(c) + '</option>').join('') +
     '<option value="__new__">+ Add a new customer</option>';
@@ -837,14 +969,6 @@ function renderDuesPane(){
     const isNew = sel.value === '__new__';
     $('dCustomerNew').classList.toggle('hidden', !isNew);
     if (isNew) $('dCustomerNew').focus();
-  };
-
-  $('dType').onchange = syncType;
-  syncType();
-
-  $('dMethod').onclick = e => {
-    const b = e.target.closest('button'); if (!b) return;
-    [...$('dMethod').children].forEach(c => c.setAttribute('aria-pressed', c === b));
   };
 
   const bal = boot.balances || [];
@@ -864,47 +988,52 @@ function renderDuesPane(){
     : '<div class="empty">No entries yet.</div>';
 }
 
-function syncType(){
-  const t = $('dType').value;
-  $('dTypeHelp').textContent = TYPE_HELP[t];
-  $('dMethodField').classList.toggle('hidden', !MONEY_IN[t]);
+function syncEvent(){
+  const ev = $('dEvent').value;
+  $('dEventHelp').textContent = EVENT_HELP[ev];
+  $('dMethodField').classList.toggle('hidden', !MONEY_IN[ev]);
 }
+$('dEvent').onchange = syncEvent;
+syncEvent();
+
+$('dMethod').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  [...$('dMethod').children].forEach(c => c.setAttribute('aria-pressed', c === b));
+};
 
 $('dSaveBtn').dataset.label = 'Add to the dues book';
 $('dSaveBtn').onclick = async () => {
   const sel = $('dCustomer').value;
   const name = sel === '__new__' ? $('dCustomerNew').value.trim() : sel;
-  const type = $('dType').value;
+  const ev = $('dEvent').value;
   const amount = r2($('dAmount').value);
   if (!name) return notice($('duesMsg'), 'Pick or enter the customer.');
   if (!(amount > 0)) return notice($('duesMsg'), 'Enter the amount.');
-  const methodBtn = [...$('dMethod').children].find(b => b.getAttribute('aria-pressed') === 'true');
-  const method = MONEY_IN[type] ? (methodBtn ? methodBtn.dataset.v : 'cash') : '';
 
-  if (boot.day && boot.day.movements && method === 'cash'){
-    if (!confirm('The day\'s figures are already locked, so this cash will not be counted in today\'s check.\n\nAdd it anyway? It will land on tomorrow.')) return;
+  const btn = [...$('dMethod').children].find(b => b.getAttribute('aria-pressed') === 'true');
+  const method = MONEY_IN[ev] ? (btn ? btn.dataset.v : 'cash') : '';
+  const touchesCash = method === 'cash' || ev === 'advance_returned';
+
+  if (boot.day && boot.day.movements && touchesCash){
+    if (!confirm('The day\'s figures are already locked, so this will not be counted in today\'s check.\n\nAdd it anyway? It lands on tomorrow.')) return;
   }
 
   notice($('duesMsg'), '');
   busy($('dSaveBtn'), true, 'Saving…');
   try{
-    const r = await api('addDuesEntry', {
-      customer: sel === '__new__' ? '' : name,
+    const r = await api('addLedgerEntry', {
+      customer:    sel === '__new__' ? '' : name,
       newCustomer: sel === '__new__' ? name : '',
-      type: type, amount: amount, method: method,
+      event: ev, amount: amount, method: method,
       note: $('dNote').value.trim()
     });
     busy($('dSaveBtn'), false);
     if (!r.ok) return notice($('duesMsg'), r.error);
-    boot.customers = r.customers;
-    boot.balances = r.balances;
-    boot.recent = r.recent;
-    boot.derived = r.derived;
+    boot = r;
     $('dAmount').value = ''; $('dNote').value = '';
     $('dCustomerNew').value = ''; $('dCustomerNew').classList.add('hidden');
     $('dCustomer').value = '';
-    renderDuesPane();
-    renderClosePane();
+    refresh();
     notice($('duesMsg'), 'Added ' + money(amount) + ' for ' + esc(name) + '.', 'ok');
   }catch(err){
     busy($('dSaveBtn'), false);
@@ -912,8 +1041,60 @@ $('dSaveBtn').onclick = async () => {
   }
 };
 
+/* ═══════════ SALES TALLY ═══════════ */
+function renderSalesPane(){
+  const d = boot.day || {};
+  const recorded = d.movements ? d.movements.cashSales : null;
+  const pos = r2($('sPosCash').value);
+  const isToday = $('sDate').value === boot.today;
+
+  if (recorded === null || !isToday){
+    $('spCash').textContent = '—';
+    $('spPos').textContent = pos ? money(pos) : '—';
+    $('spGap').textContent = '—';
+    $('spGap').className = 'big';
+    $('spNote').textContent = isToday
+      ? 'The cash gap appears once the day has been checked on the Close day tab.'
+      : 'Comparing against a past day is done on the Sales Tally tab of the sheet.';
+    return;
+  }
+  const gap = r2(recorded - pos);
+  $('spCash').textContent = money(recorded);
+  $('spPos').textContent  = money(pos);
+  $('spGap').textContent  = signed(gap);
+  $('spGap').className = 'big ' + (Math.abs(gap) > boot.tolerance ? 'is-off' : 'is-ok');
+  $('spNote').textContent = Math.abs(gap) > boot.tolerance
+    ? 'The cash sales figure entered tonight does not match what the POS reports. One of them was typed wrong, or a sale was tendered to the wrong channel.'
+    : 'The cash figure entered tonight matches the POS.';
+}
+['sPosCash','sDate'].forEach(id => $(id).addEventListener('input', renderSalesPane));
+
+$('sSaveBtn').dataset.label = 'Save the tally';
+$('sSaveBtn').onclick = async () => {
+  if (!$('sDate').value) return notice($('salesMsg'), 'Pick the date.');
+  notice($('salesMsg'), '');
+  busy($('sSaveBtn'), true, 'Saving…');
+  try{
+    const r = await api('saveSalesTally', {
+      date: $('sDate').value,
+      posCash: r2($('sPosCash').value),
+      posCard: r2($('sPosCard').value),
+      posUpi:  r2($('sPosUpi').value),
+      bankCredited: r2($('sBank').value)
+    });
+    busy($('sSaveBtn'), false);
+    if (!r.ok) return notice($('salesMsg'), r.error);
+    boot = r;
+    refresh();
+    notice($('salesMsg'), 'Tally saved for ' + $('sDate').value + '. The gaps are on the Sales Tally tab.', 'ok');
+  }catch(err){
+    busy($('sSaveBtn'), false);
+    notice($('salesMsg'), err.message + ' Nothing was saved.');
+  }
+};
+
 /* ═══════════ TABS ═══════════ */
-const TITLES = {count:'Count the drawer', close:'Close the day', dues:'Dues book'};
+const TITLES = {count:'Count the drawer', close:'Close the day', dues:'Dues book', sales:'Sales tally'};
 $('tabs').onclick = e => {
   const b = e.target.closest('button'); if (!b) return;
   switchTab(b.dataset.v);
@@ -922,7 +1103,8 @@ function switchTab(v){
   [...$('tabs').children].forEach(c => c.setAttribute('aria-selected', c.dataset.v === v));
   $('countPane').classList.toggle('hidden', v !== 'count');
   $('closePane').classList.toggle('hidden', v !== 'close');
-  $('duesPane').classList.toggle('hidden', v !== 'dues');
+  $('duesPane').classList.toggle('hidden',  v !== 'dues');
+  $('salesPane').classList.toggle('hidden', v !== 'sales');
   $('viewTitle').textContent = TITLES[v];
   window.scrollTo(0, 0);
 }
@@ -938,7 +1120,7 @@ function showDone(title, detail){
 $('againBtn').onclick = () => {
   $('doneView').classList.add('hidden');
   $('appView').classList.remove('hidden');
-  renderCountPane(); renderClosePane(); renderDuesPane();
+  refresh();
   switchTab('close');
 };
 $('signOutBtn').onclick = signOut;
