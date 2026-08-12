@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3E2C1C">
+<title>Le Chaaya — Cash ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#241A12;
+  --ink-soft:#6B5B4C;
+  --paper:#FFFDF8;
+  --card:#FFFFFF;
+  --rule:#DCD4C7;
+  --brand:#3E2C1C;
+  --alert:#A65440;
+  --ok:#2F6B4F;
+  --tape:#F3EEE4;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--brand);outline-offset:2px}
+
+/* ── shell ── */
+.topbar{
+  position:sticky;top:0;z-index:40;background:var(--brand);color:#FAF5EA;
+  padding:calc(9px + env(safe-area-inset-top)) 16px 0;
+}
+.topbar .tbrow{display:flex;align-items:center;gap:12px;padding-bottom:8px}
+.tabs{display:flex;gap:2px}
+.tabs button{flex:1;background:none;border:none;color:#FAF5EA;opacity:.6;cursor:pointer;
+  padding:9px 6px;font-size:13.5px;font-weight:600;border-bottom:2.5px solid transparent}
+.tabs button[aria-selected=true]{opacity:1;border-bottom-color:#FAF5EA}
+.topbar .tbmain{display:flex;flex-direction:column;min-width:0}
+.topbar h1{margin:0;font-size:15px;font-weight:600;letter-spacing:.01em}
+.topbar .tbsub{font-family:var(--mono);font-size:11px;letter-spacing:.05em;opacity:.7;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .who{margin-left:auto;font-family:var(--mono);font-size:11px;opacity:.72;
+  letter-spacing:.04em;white-space:nowrap}
+.wrap{max-width:640px;margin:0 auto;padding:16px 16px 0}
+
+/* ── type ── */
+.eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-soft);margin:0 0 8px;
+}
+.help{font-size:13px;color:var(--ink-soft);margin:5px 0 0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ── fields ── */
+.field{margin-bottom:20px}
+label.lbl{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+input[type=text],input[type=number],input[type=date],input[type=password],select,textarea{
+  width:100%;padding:12px 13px;background:var(--card);
+  border:1.5px solid var(--rule);border-radius:7px;min-height:48px;
+}
+textarea{min-height:76px;resize:vertical;line-height:1.4}
+input[type=number]{font-family:var(--mono);font-variant-numeric:tabular-nums}
+input:disabled,textarea:disabled,select:disabled{background:#F4F1EB;color:var(--ink-soft)}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+  background-position:calc(100% - 19px) 22px,calc(100% - 13px) 22px;background-size:6px 6px;background-repeat:no-repeat;padding-right:38px}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:48px;padding:0 18px;border-radius:7px;border:1.5px solid var(--brand);
+  background:var(--brand);color:#FAF5EA;font-weight:600;cursor:pointer;
+}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--brand)}
+.btn.wide{width:100%}
+.btn.small{min-height:40px;font-size:14px;padding:0 13px}
+
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{
+  flex:1 1 0;min-width:96px;min-height:48px;padding:0 10px;cursor:pointer;
+  background:var(--card);border:1.5px solid var(--rule);border-radius:7px;font-size:14px;font-weight:500;
+}
+.seg button[aria-pressed=true]{border-color:var(--brand);background:var(--brand);color:#FAF5EA}
+.seg.tight button{min-width:70px;flex:0 0 auto}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mini{font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px}
+
+/* ── the count rows (signature) ── */
+.denoms{background:var(--card);border:1.5px solid var(--rule);border-radius:9px;overflow:hidden}
+.drow{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 0;border-bottom:1px solid var(--rule)}
+.drow:last-child{border-bottom:none}
+.drow .swatch{width:6px;align-self:stretch;flex:0 0 6px;margin-right:6px}
+.drow .dv{font-family:var(--mono);font-weight:600;font-size:15px;width:52px;flex:0 0 52px;
+  font-variant-numeric:tabular-nums}
+.drow .dx{color:var(--ink-soft);font-family:var(--mono);font-size:13px}
+.drow input{flex:1;min-width:0;min-height:44px;text-align:center;padding:8px}
+.drow .dt{font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums;
+  width:84px;flex:0 0 84px;text-align:right;color:var(--ink-soft)}
+.drow.filled .dt{color:var(--ink);font-weight:600}
+
+/* ── the tape (signature, carried over) ── */
+.tape{
+  position:sticky;bottom:0;z-index:30;margin:0 -16px;
+  background:var(--tape);border-top:1.5px solid var(--rule);
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+}
+.tape .roll{max-height:34vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.tape .trow{display:flex;gap:10px;font-family:var(--mono);font-size:12.5px;padding:3px 0;
+  font-variant-numeric:tabular-nums}
+.tape .trow span:first-child{flex:1;font-family:var(--sans);font-size:13px}
+.tape .trow.sub{color:var(--ink-soft);font-size:11.5px}
+.tape .trow.neg span:last-child{color:var(--ok)}
+.tape .rule{border-top:1px dashed var(--ink-soft);margin:8px 0;opacity:.5}
+.tape .total{display:flex;align-items:baseline;gap:10px;font-weight:700}
+.tape .total .amt{margin-left:auto;font-family:var(--mono);font-size:19px;font-variant-numeric:tabular-nums}
+.tape .toggle{font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-soft);margin:0 0 4px}
+
+/* ── cards ── */
+.card{background:var(--card);border:1.5px solid var(--rule);border-radius:9px;padding:14px;margin-bottom:12px}
+.card.locked{border-color:var(--ok);background:#F4F8F5}
+.card h3{margin:0 0 4px;font-size:15px}
+.stamp{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);letter-spacing:.03em}
+
+/* ── the reveal ── */
+.reveal{border:2px solid var(--brand);border-radius:10px;padding:16px;background:var(--card);margin-bottom:16px}
+.reveal .rrow{display:flex;align-items:baseline;gap:10px;padding:5px 0;font-size:14px}
+.reveal .rrow span:last-child{margin-left:auto;font-family:var(--mono);font-weight:600;
+  font-variant-numeric:tabular-nums}
+.reveal .diff{border-top:1px dashed var(--ink-soft);margin-top:10px;padding-top:12px;
+  display:flex;align-items:baseline;gap:10px}
+.reveal .diff strong{font-size:15px}
+.reveal .diff .big{margin-left:auto;font-family:var(--mono);font-size:26px;font-weight:600;
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.reveal .verdict{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  margin-top:8px}
+.is-ok{color:var(--ok)}
+.is-off{color:var(--alert)}
+
+/* ── lists ── */
+.lrow{display:flex;align-items:center;gap:11px;background:var(--card);border:1.5px solid var(--rule);
+  border-radius:8px;padding:11px 12px;margin-bottom:6px}
+.lrow .li{flex:1;min-width:0}
+.lrow .ln{font-weight:600;font-size:14.5px}
+.lrow .lm{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)}
+.lrow .la{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.lrow .la small{display:block;font-weight:400;font-size:10.5px;color:var(--ink-soft);letter-spacing:.04em}
+.empty{padding:26px 16px;text-align:center;color:var(--ink-soft);font-size:14px}
+
+/* ── notices ── */
+.msg{border-radius:7px;padding:12px 13px;font-size:14px;margin-bottom:16px}
+.msg.err{background:#F7ECE8;color:#7E3D2C;border:1px solid #E4C4B8}
+.msg.ok{background:#E9F1EC;color:#22503B;border:1px solid #BFD8C9}
+.spin{width:15px;height:15px;border:2px solid rgba(250,245,234,.35);border-top-color:#FAF5EA;
+  border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.hidden{display:none!important}
+.center{max-width:400px;margin:12vh auto 0;padding:0 16px}
+.done{text-align:center;padding:40px 0}
+.done .tick{font-size:38px;color:var(--ok);line-height:1}
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<section id="loginView">
+  <div class="center">
+    <p class="eyebrow">Le Chaaya</p>
+    <h1 style="margin:0 0 4px;font-size:26px;letter-spacing:-.01em">Cash ledger</h1>
+    <p class="help" style="margin-bottom:26px">Sign in with your employee ID and PIN.</p>
+    <div id="loginMsg"></div>
+    <div class="field">
+      <label class="lbl" for="empId">Employee ID</label>
+      <input id="empId" type="text" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="e.g. TEST001">
+    </div>
+    <div class="field">
+      <label class="lbl" for="pin">PIN</label>
+      <input id="pin" type="password" inputmode="numeric" autocomplete="current-password">
+    </div>
+    <button class="btn wide" id="loginBtn">Sign in</button>
+  </div>
+</section>
+
+<!-- ══════════ MAIN ══════════ -->
+<section id="appView" class="hidden">
+  <div class="topbar">
+    <div class="tbrow">
+      <div class="tbmain">
+        <h1 id="viewTitle">Count the drawer</h1>
+        <span class="tbsub" id="branchLabel"></span>
+      </div>
+      <span class="who" id="whoLabel"></span>
+    </div>
+    <div class="tabs" id="tabs">
+      <button data-v="count" aria-selected="true">Count</button>
+      <button data-v="close" aria-selected="false">Close day</button>
+      <button data-v="dues" aria-selected="false">Dues book</button>
+    </div>
+  </div>
+
+  <!-- ── COUNT ── -->
+  <div id="countPane">
+    <div class="wrap">
+      <div id="countMsg"></div>
+
+      <div id="countLocked" class="hidden">
+        <div class="card locked">
+          <h3>Drawer counted</h3>
+          <p class="stamp" id="lockStamp"></p>
+          <div class="reveal" style="margin:12px 0 0;border-width:1.5px;border-color:var(--rule)">
+            <div class="rrow"><span>Notes</span><span id="lkNotes">₹0</span></div>
+            <div class="rrow"><span>Coins</span><span id="lkCoins">₹0</span></div>
+            <div class="diff"><strong>Counted</strong><span class="big" id="lkTotal">₹0</span></div>
+          </div>
+        </div>
+        <p class="help">A locked count can't be edited. If it's wrong, close the day with the difference showing and write what happened — that record is worth more than a tidy number.</p>
+        <button class="btn wide" id="toCloseBtn" style="margin-top:16px">Go to Close day</button>
+      </div>
+
+      <div id="countForm">
+        <div class="field">
+          <p class="eyebrow">Count everything in the drawer</p>
+          <p class="help" style="margin:0 0 12px">Do this after you've taken out the cash for banking. Enter how many of each — not the value.</p>
+          <div class="denoms" id="notesBox"></div>
+        </div>
+        <div class="field">
+          <p class="eyebrow">Coins</p>
+          <div class="denoms" id="coinsBox"></div>
+        </div>
+        <div style="height:14px"></div>
+      </div>
+    </div>
+
+    <div class="wrap" style="padding-top:0">
+      <div class="tape" id="countTape">
+        <p class="toggle">What you've counted</p>
+        <div class="roll" id="countRoll"></div>
+        <div class="rule"></div>
+        <div class="total"><span>Total counted</span><span class="amt" id="countTotal">₹0.00</span></div>
+        <button class="btn wide" id="lockBtn" style="margin-top:12px">Lock this count</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CLOSE DAY ── -->
+  <div id="closePane" class="hidden">
+    <div class="wrap">
+      <div id="closeMsg"></div>
+
+      <!-- waiting for the count -->
+      <div id="needCount" class="hidden">
+        <div class="empty">
+          Count the drawer first.<br>
+          <span style="font-size:13px">The day's figures open up once the count is locked, so nobody can work backwards from the answer.</span>
+        </div>
+        <button class="btn wide ghost" id="backToCountBtn">Go to Count</button>
+      </div>
+
+      <!-- movements -->
+      <div id="moveForm" class="hidden">
+        <div class="field">
+          <p class="eyebrow">Cash that came in</p>
+          <label class="lbl" for="mOpening">In the drawer this morning</label>
+          <input id="mOpening" type="number" disabled>
+          <p class="help" id="openingHelp"></p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="mSales">Cash sales today, from the POS</label>
+          <input id="mSales" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          <p class="help">Read this off the POS. Never work it out from the cash in the drawer — that makes the check meaningless.</p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="mAdvance">Advances taken in cash</label>
+          <input id="mAdvance" type="number" disabled>
+          <p class="help" id="advanceHelp">Added up from the Dues book.</p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="mDues">Old dues collected in cash</label>
+          <input id="mDues" type="number" disabled>
+          <p class="help" id="duesHelp">Added up from the Dues book.</p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="mOther">Anything else put in</label>
+          <input id="mOther" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          <p class="help">Owner topping up the float, change bought from a shop.</p>
+        </div>
+
+        <div class="field">
+          <p class="eyebrow">Cash that went out</p>
+          <label class="lbl" for="mRefund">Refunds paid in cash</label>
+          <input id="mRefund" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label class="lbl" for="mExpense">Paid out of the drawer</label>
+          <input id="mExpense" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          <p class="help">Milk, gas, small purchases. Keep the bills.</p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="mBanked">Taken out for banking</label>
+          <input id="mBanked" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+        </div>
+
+        <div class="field">
+          <p class="eyebrow">For the revenue check</p>
+          <label class="lbl" for="mUpi">UPI collected today</label>
+          <input id="mUpi" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          <p class="help">Doesn't touch the drawer. Recorded so you can check it against the UPI app separately.</p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="mPos">POS total sales for the day</label>
+          <input id="mPos" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div style="height:14px"></div>
+      </div>
+
+      <!-- reveal -->
+      <div id="revealBox" class="hidden">
+        <div class="reveal">
+          <p class="eyebrow" style="margin-bottom:10px">The check</p>
+          <div class="rrow"><span>Should be in the drawer</span><span id="rvExpected">₹0</span></div>
+          <div class="rrow"><span>Actually counted</span><span id="rvCounted">₹0</span></div>
+          <div class="diff">
+            <strong>Difference</strong>
+            <span class="big" id="rvDiff">₹0</span>
+          </div>
+          <p class="verdict" id="rvVerdict"></p>
+        </div>
+
+        <div class="field" id="reasonField">
+          <label class="lbl" for="reason">What do you think happened?</label>
+          <textarea id="reason" placeholder="Write it tonight, while you still remember."></textarea>
+          <p class="help" id="reasonHelp">Needed before the day can close.</p>
+        </div>
+
+        <div class="reveal" style="border-width:1.5px;border-color:var(--rule)">
+          <p class="eyebrow" style="margin-bottom:10px">Revenue against the POS</p>
+          <div class="rrow"><span>Cash sales</span><span id="rvCash">₹0</span></div>
+          <div class="rrow"><span>UPI collected</span><span id="rvUpi">₹0</span></div>
+          <div class="rrow"><span>POS total</span><span id="rvPos">₹0</span></div>
+          <div class="diff"><strong>Gap</strong><span class="big" id="rvSalesGap">₹0</span></div>
+          <p class="help" id="rvSalesNote" style="margin-top:8px"></p>
+        </div>
+      </div>
+
+      <!-- closed -->
+      <div id="closedBox" class="hidden">
+        <div class="card locked">
+          <h3>Day closed</h3>
+          <p class="stamp" id="closedStamp"></p>
+        </div>
+        <div class="reveal">
+          <div class="rrow"><span>Counted</span><span id="czCounted">₹0</span></div>
+          <div class="rrow"><span>Should have been</span><span id="czExpected">₹0</span></div>
+          <div class="diff"><strong>Difference</strong><span class="big" id="czDiff">₹0</span></div>
+        </div>
+        <div id="czReasonBox" class="card hidden">
+          <p class="eyebrow" style="margin-bottom:6px">What was written</p>
+          <p style="margin:0;font-size:14px" id="czReason"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap" style="padding-top:0">
+      <div class="tape hidden" id="closeTape">
+        <p class="toggle">The day's cash</p>
+        <div class="roll" id="closeRoll"></div>
+        <div class="rule"></div>
+        <div class="total"><span id="closeTotalLbl">Should be in the drawer</span><span class="amt" id="closeTotal">₹0.00</span></div>
+        <button class="btn wide" id="checkBtn" style="margin-top:12px">Check the day</button>
+        <button class="btn wide hidden" id="closeDayBtn" style="margin-top:12px">Close the day</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DUES BOOK ── -->
+  <div id="duesPane" class="hidden">
+    <div class="wrap">
+      <div id="duesMsg"></div>
+
+      <div class="field">
+        <p class="eyebrow">Add an entry</p>
+        <label class="lbl" for="dCustomer">Customer</label>
+        <select id="dCustomer"></select>
+        <input id="dCustomerNew" class="hidden" type="text" style="margin-top:9px" placeholder="Customer name">
+      </div>
+
+      <div class="field">
+        <label class="lbl">What happened</label>
+        <select id="dType">
+          <option value="advance_taken">They paid in advance</option>
+          <option value="advance_used">We delivered what they'd paid for</option>
+          <option value="credit_given">They took goods without paying</option>
+          <option value="payment_received">They settled what they owed</option>
+        </select>
+        <p class="help" id="dTypeHelp"></p>
+      </div>
+
+      <div class="field" id="dMethodField">
+        <label class="lbl">How did the money come in</label>
+        <div class="seg tight" id="dMethod">
+          <button type="button" data-v="cash" aria-pressed="true">Cash</button>
+          <button type="button" data-v="upi" aria-pressed="false">UPI</button>
+        </div>
+        <p class="help">Cash entries are added to today's drawer figures automatically.</p>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="dAmount">Amount</label>
+        <input id="dAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="dNote">Note (optional)</label>
+        <input id="dNote" type="text" placeholder="Birthday cake for the 12th">
+      </div>
+
+      <button class="btn wide" id="dSaveBtn">Add to the dues book</button>
+
+      <div style="height:26px"></div>
+
+      <p class="eyebrow">Outstanding right now</p>
+      <div id="balList"></div>
+
+      <div style="height:20px"></div>
+      <p class="eyebrow">Latest entries</p>
+      <div id="entryList"></div>
+      <p class="help" style="margin-bottom:24px">Entries can't be edited or deleted. To fix one, add the opposite entry with a note.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ DONE ══════════ -->
+<section id="doneView" class="hidden">
+  <div class="topbar"><div class="tbrow"><div class="tbmain"><h1>Cash ledger</h1></div></div></div>
+  <div class="wrap">
+    <div class="done">
+      <div class="tick">✓</div>
+      <h2 style="margin:12px 0 6px;font-size:21px" id="doneTitle"></h2>
+      <p class="help" id="doneDetail" style="margin-bottom:26px"></p>
+      <button class="btn wide" id="againBtn">Back</button>
+      <button class="btn ghost wide" id="signOutBtn" style="margin-top:10px">Sign out</button>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONFIG — paste the Apps Script /exec URL here
+   ═══════════════════════════════════════════ */
+const API_URL = 'PASTE_YOUR_EXEC_URL_HERE';
+
+const SESSION_KEY = 'lc_cash_session';
+const SESSION_HOURS = 12;
+
+const NOTES = [
+  {v:500, c:'#8E8B7A'}, {v:200, c:'#D79A3C'}, {v:100, c:'#9585B0'},
+  {v:50,  c:'#5A9FB5'}, {v:20,  c:'#A9A94F'}, {v:10,  c:'#A57C5B'}
+];
+const COINS = [
+  {v:20, c:'#9A9186'}, {v:10, c:'#9A9186'}, {v:5, c:'#9A9186'},
+  {v:2,  c:'#9A9186'}, {v:1,  c:'#9A9186'}
+];
+
+const TYPE_HELP = {
+  advance_taken:    'Cash or UPI came in now for something you will hand over later. It is their money until you do.',
+  advance_used:     'You delivered it. No money moves today — this just releases the advance.',
+  credit_given:     'They walked out without paying. No money moves today.',
+  payment_received: 'They cleared an old balance.'
+};
+const MONEY_IN = {advance_taken:true, payment_received:true};
+
+let boot = null;        // bootstrap payload
+let counts = {};        // denomination -> count string
+
+/* ── helpers ── */
+const $ = id => document.getElementById(id);
+const money = n => '₹' + (Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const money0 = n => '₹' + (Number(n)||0).toLocaleString('en-IN',{maximumFractionDigits:0});
+const r2 = n => Math.round((Number(n)||0)*100)/100;
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function notice(el, text, kind){
+  el.innerHTML = text ? '<div class="msg ' + (kind||'err') + '">' + text + '</div>' : '';
+  if (text) el.scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+function busy(btn, on, label){
+  btn.disabled = on;
+  btn.innerHTML = on ? '<span class="spin"></span>' + (label||'Working…') : btn.dataset.label;
+}
+
+async function api(action, payload){
+  const s = session();
+  const body = Object.assign({
+    action: action,
+    empId: s ? s.empId : $('empId').value.trim(),
+    pin:   s ? s.pin   : $('pin').value
+  }, payload || {});
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},  // avoids a CORS preflight
+    body:JSON.stringify(body),
+    redirect:'follow'
+  });
+  if (!res.ok) throw new Error('The server did not respond. Check your connection and try again.');
+  return res.json();
+}
+
+/* ── session ── */
+function session(){
+  try{
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (Date.now() > s.expires){ localStorage.removeItem(SESSION_KEY); return null; }
+    return s;
+  }catch(e){ return null; }
+}
+function saveSession(empId, pin){
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    empId:empId, pin:pin, expires:Date.now() + SESSION_HOURS*3600*1000
+  }));
+}
+function signOut(){ localStorage.removeItem(SESSION_KEY); location.reload(); }
+
+/* ═══════════ LOGIN ═══════════ */
+$('loginBtn').dataset.label = 'Sign in';
+$('loginBtn').addEventListener('click', doLogin);
+$('pin').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogin(){
+  const empId = $('empId').value.trim().toUpperCase();
+  const pin = $('pin').value.trim();
+  if (!empId || !pin) return notice($('loginMsg'), 'Enter your employee ID and PIN.');
+  notice($('loginMsg'), '');
+  busy($('loginBtn'), true, 'Signing in…');
+  try{
+    const r = await api('cashBootstrap', {empId:empId, pin:pin});
+    if (!r.ok){ busy($('loginBtn'), false); return notice($('loginMsg'), r.error); }
+    saveSession(empId, pin);
+    start(r);
+  }catch(err){
+    busy($('loginBtn'), false);
+    notice($('loginMsg'), err.message);
+  }
+}
+
+/* ═══════════ START ═══════════ */
+function start(r){
+  boot = r;
+  $('loginView').classList.add('hidden');
+  $('doneView').classList.add('hidden');
+  $('appView').classList.remove('hidden');
+  $('whoLabel').textContent = r.user.name;
+  $('branchLabel').textContent = (r.user.branch || '') + ' · ' + r.todayLabel;
+
+  buildDenoms();
+  renderCountPane();
+  renderClosePane();
+  renderDuesPane();
+}
+
+/* ═══════════ COUNT ═══════════ */
+function buildDenoms(){
+  const row = d =>
+    '<div class="drow" data-d="' + d.v + '">' +
+      '<span class="swatch" style="background:' + d.c + '"></span>' +
+      '<span class="dv">' + d.v + '</span>' +
+      '<span class="dx">×</span>' +
+      '<input type="number" inputmode="numeric" min="0" step="1" data-d="' + d.v + '" placeholder="0">' +
+      '<span class="dt" data-t="' + d.v + '">—</span>' +
+    '</div>';
+  $('notesBox').innerHTML = NOTES.map(row).join('');
+  $('coinsBox').innerHTML = COINS.map(row).join('');
+  document.querySelectorAll('.drow input').forEach(el => {
+    el.oninput = () => { counts[el.dataset.d] = el.value; renderCountTape(); };
+  });
+  renderCountTape();
+}
+
+function countedTotal(){
+  return NOTES.concat(COINS).reduce((s,d) => s + d.v * (parseInt(counts[d.v],10) || 0), 0);
+}
+function notesTotal(){
+  return NOTES.reduce((s,d) => s + d.v * (parseInt(counts[d.v],10) || 0), 0);
+}
+
+function renderCountTape(){
+  const rows = [];
+  [['Notes', NOTES], ['Coins', COINS]].forEach(([lbl, set]) => {
+    const hits = set.filter(d => (parseInt(counts[d.v],10) || 0) > 0);
+    if (!hits.length) return;
+    rows.push('<div class="trow sub"><span>' + lbl + '</span><span></span></div>');
+    hits.forEach(d => {
+      const n = parseInt(counts[d.v],10);
+      rows.push('<div class="trow"><span>' + d.v + ' × ' + n + '</span><span>' + money0(d.v*n) + '</span></div>');
+    });
+  });
+  $('countRoll').innerHTML = rows.length ? rows.join('')
+    : '<div class="trow sub"><span>Nothing counted yet.</span></div>';
+
+  // live line totals
+  NOTES.concat(COINS).forEach(d => {
+    const n = parseInt(counts[d.v],10) || 0;
+    const el = document.querySelector('[data-t="' + d.v + '"]');
+    if (el) el.textContent = n > 0 ? money0(d.v*n) : '—';
+    const row = document.querySelector('.drow[data-d="' + d.v + '"]');
+    if (row) row.classList.toggle('filled', n > 0);
+  });
+
+  $('countTotal').textContent = money(countedTotal());
+}
+
+function renderCountPane(){
+  const c = boot.day && boot.day.count;
+  $('countForm').classList.toggle('hidden', !!c);
+  $('countTape').classList.toggle('hidden', !!c);
+  $('countLocked').classList.toggle('hidden', !c);
+  if (c){
+    $('lockStamp').textContent = 'Locked ' + c.at + ' by ' + c.by;
+    $('lkNotes').textContent = money(c.notesTotal);
+    $('lkCoins').textContent = money(c.coinsTotal);
+    $('lkTotal').textContent = money(c.total);
+  }
+}
+
+$('lockBtn').dataset.label = 'Lock this count';
+$('lockBtn').onclick = async () => {
+  const total = countedTotal();
+  const anyEntered = NOTES.concat(COINS).some(d => counts[d.v] !== undefined && counts[d.v] !== '');
+  if (!anyEntered) return notice($('countMsg'), 'Count the drawer before locking. If the drawer really is empty, enter 0 against any one line.');
+  if (!confirm('Lock the count at ' + money(total) + '?\n\nIt cannot be changed afterwards. The day\'s figures open up next.')) return;
+  notice($('countMsg'), '');
+  busy($('lockBtn'), true, 'Locking…');
+  try{
+    const payload = {};
+    NOTES.concat(COINS).forEach(d => { payload['d' + d.v] = parseInt(counts[d.v],10) || 0; });
+    const r = await api('saveCount', {counts:payload, total:total});
+    busy($('lockBtn'), false);
+    if (!r.ok) return notice($('countMsg'), r.error);
+    boot.day = r.day;
+    boot.opening = r.opening;
+    renderCountPane();
+    renderClosePane();
+    notice($('countMsg'), 'Count locked at ' + money(r.day.count.total) + '.', 'ok');
+  }catch(err){
+    busy($('lockBtn'), false);
+    notice($('countMsg'), err.message + ' Nothing was saved.');
+  }
+};
+
+$('toCloseBtn').onclick = () => switchTab('close');
+$('backToCountBtn').onclick = () => switchTab('count');
+
+/* ═══════════ CLOSE DAY ═══════════ */
+const MOVE_FIELDS = [
+  ['mSales','sales'], ['mOther','other'], ['mRefund','refund'],
+  ['mExpense','expense'], ['mBanked','banked'], ['mUpi','upi'], ['mPos','pos']
+];
+
+function renderClosePane(){
+  const d = boot.day || {};
+  const counted = d.count ? d.count.total : 0;
+  const closed = !!d.close;
+
+  $('needCount').classList.toggle('hidden', !!d.count);
+  $('moveForm').classList.toggle('hidden', !d.count || closed || !!d.movements);
+  $('revealBox').classList.toggle('hidden', !d.movements || closed);
+  $('closedBox').classList.toggle('hidden', !closed);
+  $('closeTape').classList.toggle('hidden', !d.count || closed);
+  $('checkBtn').classList.toggle('hidden', !!d.movements);
+  $('closeDayBtn').classList.toggle('hidden', !d.movements || closed);
+
+  if (!d.count) return;
+
+  $('mOpening').value = boot.opening;
+  $('openingHelp').textContent = boot.openingFrom
+    ? 'Left in the drawer when ' + boot.openingFrom + ' closed.'
+    : 'First day — this is the starting figure your owner set.';
+  $('mAdvance').value = boot.derived.advancesCash;
+  $('mDues').value = boot.derived.duesCash;
+  $('advanceHelp').textContent = boot.derived.advanceCount
+    ? 'From ' + boot.derived.advanceCount + ' entr' + (boot.derived.advanceCount===1?'y':'ies') + ' in the Dues book.'
+    : 'Nothing in the Dues book today.';
+  $('duesHelp').textContent = boot.derived.duesCount
+    ? 'From ' + boot.derived.duesCount + ' entr' + (boot.derived.duesCount===1?'y':'ies') + ' in the Dues book.'
+    : 'Nothing in the Dues book today.';
+
+  if (d.movements) fillReveal(d);
+  if (closed) fillClosed(d);
+  renderCloseTape();
+}
+
+function moveValues(){
+  const v = {};
+  MOVE_FIELDS.forEach(([id,key]) => { v[key] = r2($(id).value); });
+  v.opening = r2(boot.opening);
+  v.advance = r2(boot.derived.advancesCash);
+  v.dues    = r2(boot.derived.duesCash);
+  return v;
+}
+function expectedFrom(v){
+  return r2(v.opening + v.sales + v.advance + v.dues + v.other - v.refund - v.expense - v.banked);
+}
+
+function renderCloseTape(){
+  const d = boot.day || {};
+  if (d.movements){
+    $('closeTotalLbl').textContent = 'Should be in the drawer';
+    $('closeTotal').textContent = money(d.movements.expected);
+    $('closeRoll').innerHTML = '<div class="trow sub"><span>Figures locked. Read the check above.</span></div>';
+    return;
+  }
+  const v = moveValues();
+  const rows = [
+    ['In the drawer this morning', v.opening, false],
+    ['Cash sales', v.sales, false],
+    ['Advances taken', v.advance, false],
+    ['Dues collected', v.dues, false],
+    ['Anything else in', v.other, false],
+    ['Refunds paid', v.refund, true],
+    ['Paid out of the drawer', v.expense, true],
+    ['Taken out for banking', v.banked, true]
+  ].filter(r => r[1] !== 0 || r[0] === 'In the drawer this morning' || r[0] === 'Cash sales');
+
+  $('closeRoll').innerHTML = rows.map(([lbl, amt, out]) =>
+    '<div class="trow' + (out ? ' neg' : '') + '"><span>' + lbl + '</span><span>' +
+    (out ? '− ' : '') + money(amt) + '</span></div>').join('');
+  $('closeTotalLbl').textContent = 'Should be in the drawer';
+  $('closeTotal').textContent = money(expectedFrom(v));
+}
+
+MOVE_FIELDS.forEach(([id]) => {
+  const el = $(id);
+  if (el) el.addEventListener('input', renderCloseTape);
+});
+
+$('checkBtn').dataset.label = 'Check the day';
+$('checkBtn').onclick = async () => {
+  const v = moveValues();
+  if ($('mSales').value === '') return notice($('closeMsg'), 'Enter the cash sales figure from the POS. If it really was zero, type 0.');
+  if ($('mPos').value === '') return notice($('closeMsg'), 'Enter the POS total for the day.');
+  if (!confirm('Check the day?\n\nThese figures lock now, and the difference appears. You cannot go back and adjust them.')) return;
+  notice($('closeMsg'), '');
+  busy($('checkBtn'), true, 'Checking…');
+  try{
+    const r = await api('saveMovements', v);
+    busy($('checkBtn'), false);
+    if (!r.ok) return notice($('closeMsg'), r.error);
+    boot.day = r.day;
+    renderClosePane();
+    window.scrollTo(0, 0);
+  }catch(err){
+    busy($('checkBtn'), false);
+    notice($('closeMsg'), err.message + ' Nothing was saved.');
+  }
+};
+
+function fillReveal(d){
+  const m = d.movements, counted = d.count.total;
+  const diff = r2(counted - m.expected);
+  const off  = Math.abs(diff) > boot.tolerance;
+
+  $('rvExpected').textContent = money(m.expected);
+  $('rvCounted').textContent  = money(counted);
+  $('rvDiff').textContent     = (diff > 0 ? '+' : '') + money(diff);
+  $('rvDiff').className = 'big ' + (off ? 'is-off' : 'is-ok');
+  $('rvVerdict').className = 'verdict ' + (off ? 'is-off' : 'is-ok');
+  $('rvVerdict').textContent = diff === 0 ? 'Exactly right'
+    : off ? (diff < 0 ? 'Short — money is missing' : 'Over — there is more than there should be')
+          : 'Within tolerance';
+
+  $('reasonField').classList.toggle('hidden', !off);
+
+  const gap = r2(m.sales + m.upi - m.pos);
+  $('rvCash').textContent = money(m.sales);
+  $('rvUpi').textContent  = money(m.upi);
+  $('rvPos').textContent  = money(m.pos);
+  $('rvSalesGap').textContent = (gap > 0 ? '+' : '') + money(gap);
+  $('rvSalesGap').className = 'big ' + (Math.abs(gap) > boot.tolerance ? 'is-off' : 'is-ok');
+  $('rvSalesNote').textContent = Math.abs(gap) <= boot.tolerance
+    ? 'Cash and UPI together account for the POS total. Card sales, if any, will show as a gap here.'
+    : 'Check the UPI app against the UPI figure before you assume the cash is at fault.';
+}
+
+$('closeDayBtn').dataset.label = 'Close the day';
+$('closeDayBtn').onclick = async () => {
+  const d = boot.day, diff = r2(d.count.total - d.movements.expected);
+  const off = Math.abs(diff) > boot.tolerance;
+  const reason = $('reason').value.trim();
+  if (off && reason.length < 4) return notice($('closeMsg'), 'Write what you think happened before closing. Even "no idea, will check the bills tomorrow" is worth recording.');
+  notice($('closeMsg'), '');
+  busy($('closeDayBtn'), true, 'Closing…');
+  try{
+    const r = await api('closeDay', {reason:reason});
+    busy($('closeDayBtn'), false);
+    if (!r.ok) return notice($('closeMsg'), r.error);
+    boot.day = r.day;
+    showDone('Day closed',
+      'Counted ' + money(d.count.total) + ' against ' + money(d.movements.expected) + ' expected.<br>' +
+      (diff === 0 ? 'Exactly right.' :
+        (diff < 0 ? 'Short by ' : 'Over by ') + money(Math.abs(diff)) + '.') +
+      '<br>Tomorrow opens with ' + money(d.count.total) + '.');
+  }catch(err){
+    busy($('closeDayBtn'), false);
+    notice($('closeMsg'), err.message + ' Nothing was saved.');
+  }
+};
+
+function fillClosed(d){
+  const diff = r2(d.count.total - d.movements.expected);
+  $('closedStamp').textContent = 'Closed ' + d.close.at + ' by ' + d.close.by;
+  $('czCounted').textContent  = money(d.count.total);
+  $('czExpected').textContent = money(d.movements.expected);
+  $('czDiff').textContent = (diff > 0 ? '+' : '') + money(diff);
+  $('czDiff').className = 'big ' + (Math.abs(diff) > boot.tolerance ? 'is-off' : 'is-ok');
+  $('czReasonBox').classList.toggle('hidden', !d.close.reason);
+  $('czReason').textContent = d.close.reason || '';
+}
+
+/* ═══════════ DUES BOOK ═══════════ */
+function renderDuesPane(){
+  const sel = $('dCustomer');
+  const keep = sel.value;
+  sel.innerHTML = '<option value="">Pick a customer</option>' +
+    (boot.customers||[]).map(c => '<option value="' + esc(c) + '">' + esc(c) + '</option>').join('') +
+    '<option value="__new__">+ Add a new customer</option>';
+  if (keep) sel.value = keep;
+  sel.onchange = () => {
+    const isNew = sel.value === '__new__';
+    $('dCustomerNew').classList.toggle('hidden', !isNew);
+    if (isNew) $('dCustomerNew').focus();
+  };
+
+  $('dType').onchange = syncType;
+  syncType();
+
+  $('dMethod').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    [...$('dMethod').children].forEach(c => c.setAttribute('aria-pressed', c === b));
+  };
+
+  const bal = boot.balances || [];
+  $('balList').innerHTML = bal.length ? bal.map(b =>
+    '<div class="lrow"><span class="li"><span class="ln">' + esc(b.customer) + '</span><br>' +
+    '<span class="lm">' + (b.advance > 0 ? 'paid ahead' : 'owes you') + '</span></span>' +
+    '<span class="la">' + money(b.advance > 0 ? b.advance : b.due) +
+    '<small>' + (b.advance > 0 ? 'ADVANCE HELD' : 'DUE') + '</small></span></div>').join('')
+    : '<div class="empty">Nobody owes anything, and you are holding no advances.</div>';
+
+  const ent = boot.recent || [];
+  $('entryList').innerHTML = ent.length ? ent.map(e =>
+    '<div class="lrow"><span class="li"><span class="ln">' + esc(e.customer) + '</span><br>' +
+    '<span class="lm">' + esc(e.label) + ' · ' + esc(e.date) + ' · ' + esc(e.by) + '</span></span>' +
+    '<span class="la">' + money(e.amount) +
+    (e.method ? '<small>' + esc(e.method.toUpperCase()) + '</small>' : '') + '</span></div>').join('')
+    : '<div class="empty">No entries yet.</div>';
+}
+
+function syncType(){
+  const t = $('dType').value;
+  $('dTypeHelp').textContent = TYPE_HELP[t];
+  $('dMethodField').classList.toggle('hidden', !MONEY_IN[t]);
+}
+
+$('dSaveBtn').dataset.label = 'Add to the dues book';
+$('dSaveBtn').onclick = async () => {
+  const sel = $('dCustomer').value;
+  const name = sel === '__new__' ? $('dCustomerNew').value.trim() : sel;
+  const type = $('dType').value;
+  const amount = r2($('dAmount').value);
+  if (!name) return notice($('duesMsg'), 'Pick or enter the customer.');
+  if (!(amount > 0)) return notice($('duesMsg'), 'Enter the amount.');
+  const methodBtn = [...$('dMethod').children].find(b => b.getAttribute('aria-pressed') === 'true');
+  const method = MONEY_IN[type] ? (methodBtn ? methodBtn.dataset.v : 'cash') : '';
+
+  if (boot.day && boot.day.movements && method === 'cash'){
+    if (!confirm('The day\'s figures are already locked, so this cash will not be counted in today\'s check.\n\nAdd it anyway? It will land on tomorrow.')) return;
+  }
+
+  notice($('duesMsg'), '');
+  busy($('dSaveBtn'), true, 'Saving…');
+  try{
+    const r = await api('addDuesEntry', {
+      customer: sel === '__new__' ? '' : name,
+      newCustomer: sel === '__new__' ? name : '',
+      type: type, amount: amount, method: method,
+      note: $('dNote').value.trim()
+    });
+    busy($('dSaveBtn'), false);
+    if (!r.ok) return notice($('duesMsg'), r.error);
+    boot.customers = r.customers;
+    boot.balances = r.balances;
+    boot.recent = r.recent;
+    boot.derived = r.derived;
+    $('dAmount').value = ''; $('dNote').value = '';
+    $('dCustomerNew').value = ''; $('dCustomerNew').classList.add('hidden');
+    $('dCustomer').value = '';
+    renderDuesPane();
+    renderClosePane();
+    notice($('duesMsg'), 'Added ' + money(amount) + ' for ' + esc(name) + '.', 'ok');
+  }catch(err){
+    busy($('dSaveBtn'), false);
+    notice($('duesMsg'), err.message + ' Nothing was saved.');
+  }
+};
+
+/* ═══════════ TABS ═══════════ */
+const TITLES = {count:'Count the drawer', close:'Close the day', dues:'Dues book'};
+$('tabs').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  switchTab(b.dataset.v);
+};
+function switchTab(v){
+  [...$('tabs').children].forEach(c => c.setAttribute('aria-selected', c.dataset.v === v));
+  $('countPane').classList.toggle('hidden', v !== 'count');
+  $('closePane').classList.toggle('hidden', v !== 'close');
+  $('duesPane').classList.toggle('hidden', v !== 'dues');
+  $('viewTitle').textContent = TITLES[v];
+  window.scrollTo(0, 0);
+}
+
+/* ═══════════ DONE ═══════════ */
+function showDone(title, detail){
+  $('appView').classList.add('hidden');
+  $('doneView').classList.remove('hidden');
+  window.scrollTo(0, 0);
+  $('doneTitle').textContent = title;
+  $('doneDetail').innerHTML = detail;
+}
+$('againBtn').onclick = () => {
+  $('doneView').classList.add('hidden');
+  $('appView').classList.remove('hidden');
+  renderCountPane(); renderClosePane(); renderDuesPane();
+  switchTab('close');
+};
+$('signOutBtn').onclick = signOut;
+
+/* ═══════════ RESUME A SESSION ═══════════ */
+(async function(){
+  const s = session();
+  if (!s) return;
+  try{
+    const r = await api('cashBootstrap', {});
+    if (r.ok) start(r); else localStorage.removeItem(SESSION_KEY);
+  }catch(e){ /* stay on the sign-in screen */ }
+})();
+</script>
+</body>
+</html>
