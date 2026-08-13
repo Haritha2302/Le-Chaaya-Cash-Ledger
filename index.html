@@ -953,8 +953,10 @@ function fillClosed(d){
   $('czOwnCounted').textContent = money(d.closing.total);
   $('czHeld').textContent = money(boot.advancesHeld);
   $('czOwn').textContent = money(own);
-  $('czFree').textContent = 'Less the ' + money(boot.float) + ' float, that leaves ' +
-    money(r2(own - boot.float)) + ' you could actually take out.';
+  $('czFree').textContent = boot.float > 0
+    ? 'Less the ' + money(boot.float) + ' float, that leaves ' +
+      money(r2(own - boot.float)) + ' you could actually take out.'
+    : 'All of it is yours to take out — no float is set aside.';
 }
 
 /* ═══════════ DUES ═══════════ */
