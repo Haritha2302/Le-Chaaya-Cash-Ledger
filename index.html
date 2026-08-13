@@ -474,12 +474,21 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
         <input id="sDate" type="date">
       </div>
       <div class="field">
-        <label class="lbl" for="sPosCash">POS cash tender</label>
-        <input id="sPosCash" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+        <label class="lbl" for="sPosTotal">POS total sales</label>
+        <input id="sPosTotal" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+        <p class="help">The one figure the POS reports for the whole day, every tender type included. This is what the check runs on.</p>
       </div>
-      <div class="grid2 field">
-        <div><span class="mini">POS card</span><input id="sPosCard" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
-        <div><span class="mini">POS UPI</span><input id="sPosUpi" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="field">
+        <span class="mini">Breakdown (optional, for the record)</span>
+        <div class="grid2" style="margin-bottom:10px">
+          <div><span class="mini">POS cash</span><input id="sPosCash" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+          <div><span class="mini">POS UPI</span><input id="sPosUpi" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+        </div>
+        <div class="grid2">
+          <div><span class="mini">POS card</span><input id="sPosCard" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+          <div><span class="mini">Mixed tender</span><input id="sPosMixed" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+        </div>
+        <p class="help" id="spParts"></p>
       </div>
       <div class="field">
         <label class="lbl" for="sBank">Actually credited to the bank</label>
@@ -488,7 +497,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
       </div>
 
       <div class="reveal quiet" id="salesPreview">
-        <div class="rrow"><span>POS total (cash + card + UPI)</span><span id="spPos">—</span></div>
+        <div class="rrow"><span>POS total</span><span id="spPos">—</span></div>
         <div class="rrow"><span>Physical Cash Received</span><span id="spCash">—</span></div>
         <div class="rrow"><span>Credited to the bank</span><span id="spBank">—</span></div>
         <div class="rrow"><span>Taken on credit today</span><span id="spCredit">—</span></div>
@@ -1153,11 +1162,19 @@ $('dSaveBtn').onclick = async () => {
 function renderSalesPane(){
   const d = boot.day || {};
   const isToday = $('sDate').value === boot.today;
-  const posTotal = r2(r2($('sPosCash').value) + r2($('sPosCard').value) + r2($('sPosUpi').value));
+  const posTotal = r2($('sPosTotal').value);
   const bank = r2($('sBank').value);
+  const parts = r2($('sPosCash').value) + r2($('sPosCard').value)
+              + r2($('sPosUpi').value) + r2($('sPosMixed').value);
 
   $('spPos').textContent  = posTotal ? money(posTotal) : '—';
   $('spBank').textContent = bank ? money(bank) : '—';
+
+  const partsGap = r2(posTotal - parts);
+  $('spParts').textContent = parts ? (partsGap === 0
+    ? 'Breakdown adds up.'
+    : 'Breakdown is ' + money(Math.abs(partsGap)) + (partsGap > 0 ? ' short of' : ' more than') + ' the total. A tender type is missing or double counted.')
+    : 'Breakdown is optional. Only the total is used.';
 
   const ready = isToday && d.opening && d.closing && d.movements;
   if (!ready){
@@ -1171,8 +1188,6 @@ function renderSalesPane(){
     return;
   }
 
-  /* Cash that arrived from today's selling, taken from the two counts rather
-     than from the POS tag. Everything that moved for another reason comes out. */
   const m = d.movements;
   const cashFromSales = r2(
     d.closing.total - d.opening.total
@@ -1188,14 +1203,14 @@ function renderSalesPane(){
   $('spGap').textContent    = signed(gap);
   $('spGap').className = 'big ' + (off ? 'is-off' : 'is-ok');
   $('spNote').textContent = !posTotal
-    ? 'Enter the POS figures to see the gap.'
+    ? 'Enter the POS total to see the gap.'
     : off
       ? (gap > 0
           ? 'Rung up but never reached you, in cash or in the bank. Check the bank credit first, then the day\'s removals.'
           : 'More arrived than was rung up. Usually a sale that was never put through the POS.')
-      : 'Everything rung up is accounted for. Cash tagged as UPI or the other way round cannot show here, which is the point.';
+      : 'Everything rung up is accounted for. However a payment was tagged — cash, UPI, or split across both — cannot move this number.';
 }
-['sPosCash','sPosCard','sPosUpi','sBank','sDate'].forEach(id => $(id).addEventListener('input', renderSalesPane));
+['sPosTotal','sPosCash','sPosCard','sPosUpi','sPosMixed','sBank','sDate'].forEach(id => $(id).addEventListener('input', renderSalesPane));
 
 $('sSaveBtn').dataset.label = 'Save the tally';
 $('sSaveBtn').onclick = async () => {
@@ -1205,6 +1220,8 @@ $('sSaveBtn').onclick = async () => {
   try{
     const r = await api('saveSalesTally', {
       date: $('sDate').value,
+      posTotal: r2($('sPosTotal').value),
+      posMixed: r2($('sPosMixed').value),
       posCash: r2($('sPosCash').value),
       posCard: r2($('sPosCard').value),
       posUpi:  r2($('sPosUpi').value),
