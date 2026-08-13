@@ -160,6 +160,9 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .lrow .lm{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)}
 .lrow .la{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
 .lrow .la small{display:block;font-weight:400;font-size:10.5px;color:var(--ink-soft);letter-spacing:.04em}
+.lrow{flex-wrap:wrap}
+.settlebar{flex:1 0 100%;display:flex;gap:8px;margin-top:11px;padding-top:11px;border-top:1px solid var(--rule)}
+.settlebar .btn{flex:1;min-width:0}
 .empty{padding:26px 16px;text-align:center;color:var(--ink-soft);font-size:14px}
 
 /* ── notices ── */
@@ -405,11 +408,11 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 
       <div style="height:26px"></div>
       <p class="eyebrow">Outstanding right now</p>
+      <div class="reveal quiet">
+        <div class="rrow"><span>We owe customers and staff</span><span id="totPayable">₹0</span></div>
+        <div class="rrow"><span>They owe us</span><span id="totReceivable">₹0</span></div>
+      </div>
       <div id="balList"></div>
-
-      <div style="height:20px"></div>
-      <p class="eyebrow">Latest entries</p>
-      <div id="entryList"></div>
       <p class="help" style="margin-bottom:24px">Entries can't be edited or deleted. To fix one, add the opposite entry with a note.</p>
     </div>
   </div>
@@ -952,9 +955,11 @@ function fillClosed(d){
 /* ═══════════ DUES ═══════════ */
 function renderDuesPane(){
   const sel = $('dCustomer'), keep = sel.value;
+  const nextNo = boot.nextUnknown || 1;
   sel.innerHTML = '<option value="">Pick a customer</option>' +
     (boot.customers||[]).map(c => '<option value="' + esc(c) + '">' + esc(c) + '</option>').join('') +
-    '<option value="__new__">+ Add a new customer</option>';
+    '<option value="__new__">+ Someone else — I have their name</option>' +
+    '<option value="__unknown__">+ Someone else — no name (Customer ' + nextNo + ')</option>';
   if (keep) sel.value = keep;
   sel.onchange = () => {
     const isNew = sel.value === '__new__';
@@ -973,20 +978,42 @@ function renderDuesPane(){
     const sub = (b.payable > 0 && b.receivable > 0)
       ? 'net: ' + (net > 0 ? 'they owe you ' + money(net) : 'you owe them ' + money(-net))
       : (b.payable > 0 ? 'change we kept' : 'unpaid tab');
+    const acts = [];
+    if (b.payable > 0) acts.push(settleBtn(b.customer, 'Payable Settled', b.payable, 'Settle ' + money(b.payable) + ' we owe'));
+    if (b.receivable > 0) acts.push(settleBtn(b.customer, 'Receivable Settled', b.receivable, 'Collect ' + money(b.receivable)));
     return '<div class="lrow"><span class="li"><span class="ln">' + esc(b.customer) + '</span><br>' +
-      '<span class="lm">' + sub + '</span></span>' + parts.join('') + '</div>';
+      '<span class="lm">' + sub + '</span></span>' + parts.join('') +
+      (acts.length ? '<div class="settlebar">' + acts.join('') + '</div>' : '') + '</div>';
   }).join('')
     : '<div class="empty">Nobody owes anything, and you owe nobody change.</div>';
 
-  const ent = boot.recent || [];
-  $('entryList').innerHTML = ent.length ? ent.map(e =>
-    '<div class="lrow"><span class="li"><span class="ln">' + esc(e.customer) + '</span><br>' +
-    '<span class="lm">' + esc(e.label) + ' · ' + esc(e.date) + ' · ' + esc(e.by) + '</span></span>' +
-    '<span class="la">' + money(e.amount) +
-    (e.method ? '<small>' + esc(e.method.toUpperCase()) + '</small>' : '') + '</span></div>').join('')
-    : '<div class="empty">No entries yet.</div>';
+$('balList').querySelectorAll('.settle').forEach(btn => {
+    btn.onclick = () => {
+      $('dCustomer').value = btn.dataset.c;
+      $('dCustomerNew').value = '';
+      $('dCustomerNew').classList.add('hidden');
+      $('dEvent').value = btn.dataset.e;
+      syncEvent();
+      $('dAmount').value = btn.dataset.a;
+      notice($('duesMsg'),
+        'Settling ' + esc(btn.dataset.c) + ' for ' + money(btn.dataset.a) +
+        '. Change the amount if they are only settling part of it.', 'ok');
+      window.scrollTo({top: 0, behavior: 'smooth'});
+      $('dAmount').focus();
+      $('dAmount').select();
+    };
+  });
+  
+const t = boot.totals || {payable: 0, receivable: 0};
+  $('totPayable').textContent = money(t.payable);
+  $('totReceivable').textContent = money(t.receivable);
 }
 
+function settleBtn(customer, event, amount, label){
+  return '<button type="button" class="btn ghost small settle" data-c="' + esc(customer) +
+         '" data-e="' + esc(event) + '" data-a="' + amount + '">' + label + '</button>';
+}
+  
 function syncEvent(){
   const ev = $('dEvent').value;
   $('dEventHelp').textContent = EVENT_HELP[ev];
@@ -1003,7 +1030,10 @@ $('dMethod').onclick = e => {
 $('dSaveBtn').dataset.label = 'Add to the dues book';
 $('dSaveBtn').onclick = async () => {
   const sel = $('dCustomer').value;
-  const name = sel === '__new__' ? $('dCustomerNew').value.trim() : sel;
+  const isNew = (sel === '__new__' || sel === '__unknown__');
+  const name = sel === '__new__'     ? $('dCustomerNew').value.trim()
+             : sel === '__unknown__' ? 'Customer - ' + (boot.nextUnknown || 1) + ' - Name Unknown'
+             : sel;
   const ev = $('dEvent').value;
   const amount = r2($('dAmount').value);
   if (!name) return notice($('duesMsg'), 'Pick or enter the customer.');
@@ -1020,8 +1050,8 @@ $('dSaveBtn').onclick = async () => {
   busy($('dSaveBtn'), true, 'Saving…');
   try{
     const r = await api('addLedgerEntry', {
-      customer:    sel === '__new__' ? '' : name,
-      newCustomer: sel === '__new__' ? name : '',
+      customer:    isNew ? '' : name,
+      newCustomer: isNew ? name : '',
       event: ev, amount: amount, method: method,
       note: $('dNote').value.trim()
     });
