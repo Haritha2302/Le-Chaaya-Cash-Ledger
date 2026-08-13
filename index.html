@@ -212,6 +212,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
     </div>
     <div class="tabs" id="tabs">
       <button data-v="count" aria-selected="true">Count</button>
+      <button data-v="cash" aria-selected="false">Cash in/out</button>
       <button data-v="close" aria-selected="false">Close day</button>
       <button data-v="dues" aria-selected="false">Dues</button>
       <button data-v="sales" aria-selected="false" class="hidden">Sales</button>
@@ -254,6 +255,51 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
     </div>
   </div>
 
+  <!-- ── CASH IN / OUT ── -->
+  <div id="cashPane" class="hidden">
+    <div class="wrap">
+      <div id="cashMsg"></div>
+      <p class="eyebrow">Log it now, not at closing</p>
+      <p class="help" style="margin:0 0 18px">Any cash going into or out of the drawer that is not a sale. Record it when it happens — by closing time nobody remembers the reason.</p>
+
+      <div class="field">
+        <label class="lbl">What happened</label>
+        <div class="seg" id="cashType">
+          <button type="button" data-v="owner_topup" aria-pressed="true">Cash put in</button>
+          <button type="button" data-v="cash_removed" aria-pressed="false">Cash taken out</button>
+          <button type="button" data-v="refund_paid" aria-pressed="false">Refund paid</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="cAmount">Amount</label>
+        <input id="cAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+      </div>
+
+      <div class="field" id="cByField">
+        <label class="lbl" for="cBy">Whose hands</label>
+        <input id="cBy" type="text" placeholder="Name">
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="cReason">Reason</label>
+        <input id="cReason" type="text" placeholder="Banked, owner draw, change bought">
+      </div>
+
+      <button class="btn wide" id="cSaveBtn">Log it</button>
+
+      <div style="height:26px"></div>
+      <p class="eyebrow">Logged today</p>
+      <div class="reveal quiet">
+        <div class="rrow"><span>Cash put in</span><span id="cTotIn">₹0</span></div>
+        <div class="rrow"><span>Cash taken out</span><span id="cTotOut">₹0</span></div>
+        <div class="rrow"><span>Refunds paid</span><span id="cTotRef">₹0</span></div>
+      </div>
+      <div id="cList"></div>
+      <p class="help" style="margin-bottom:24px">Entries cannot be edited or deleted. To fix one, log the opposite with a note.</p>
+    </div>
+  </div>
+
   <!-- ── CLOSE DAY ── -->
   <div id="closePane" class="hidden">
     <div class="wrap">
@@ -282,17 +328,16 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
           <p class="help" id="advanceHelp"></p>
         </div>
         <div class="field">
-          <label class="lbl" for="mTopup">Owner top-up</label>
-          <input id="mTopup" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
-          <input id="mTopupBy" type="text" style="margin-top:9px" placeholder="Who put it in">
-          <p class="help">Float added, or change bought from a shop.</p>
+          <label class="lbl" for="mTopup">Cash put in during the day</label>
+          <input id="mTopup" type="number" disabled>
+          <p class="help" id="topupHelp"></p>
         </div>
 
         <div class="field">
           <p class="eyebrow">Cash that went out</p>
-          <label class="lbl" for="mRefund">Refunds and cancellations paid in cash</label>
-          <input id="mRefund" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
-          <input id="mRefundReason" type="text" style="margin-top:9px" placeholder="What was refunded">
+          <label class="lbl" for="mRefund">Refunds paid in cash</label>
+          <input id="mRefund" type="number" disabled>
+          <p class="help" id="refundHelp"></p>
         </div>
         <div class="field">
           <label class="lbl" for="mReturned">From the dues book — cash out</label>
@@ -301,10 +346,10 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
         </div>
 
         <div class="field">
-          <label class="lbl">Cash taken out of the drawer</label>
-          <div id="removalList"></div>
-          <button class="btn ghost wide small" id="addRemovalBtn">Add a removal</button>
-          <p class="help">Banking, owner draw, anything at all. Every removal needs a reason and a name — an unrecorded removal shows up as a shortage and someone gets blamed for it.</p>
+          <label class="lbl" for="mRemoved">Cash taken out during the day</label>
+          <input id="mRemoved" type="number" disabled>
+          <p class="help" id="removedHelp"></p>
+          <button class="btn ghost wide small" id="toCashBtn" style="margin-top:10px">Log another one</button>
         </div>
         <div style="height:14px"></div>
       </div>
@@ -501,7 +546,6 @@ const EVENT_HELP = {
 
 let boot = null;
 let counts = {};
-let removals = [];
 
 /* ── helpers ── */
 const $ = id => document.getElementById(id);
@@ -594,6 +638,7 @@ function start(r){
 
 function refresh(){
   renderCountPane();
+  renderCashPane();
   renderClosePane();
   renderDuesPane();
   renderSalesPane();
@@ -773,48 +818,29 @@ function renderClosePane(){
   $('advanceHelp').textContent = fromLedger(boot.derived.inCount);
   $('returnHelp').textContent = fromLedger(boot.derived.outCount);
 
-  if (!locked && !removals.length) addRemoval();
-  if (!locked) renderRemovals();
+  const lg = d.logged || {topup: 0, refund: 0, removed: 0, removals: []};
+  $('mTopup').value   = lg.topup;
+  $('mRefund').value  = lg.refund;
+  $('mRemoved').value = lg.removed;
+  $('topupHelp').textContent   = fromCashTab(lg.topup);
+  $('refundHelp').textContent  = fromCashTab(lg.refund);
+  $('removedHelp').textContent = lg.removals.length
+    ? lg.removals.map(x => money(x.amount) + ' — ' + x.reason + ' (' + x.byWhom + ')').join('; ')
+    : 'Nothing taken out today.';
 
   if (locked) fillReveal(d);
   if (closed) fillClosed(d);
   renderCloseTape();
 }
 
+function fromCashTab(amt){
+  return amt > 0 ? 'Logged on the Cash in/out tab.' : 'Nothing logged today.';
+}
+  
 function fromLedger(n){
   return n ? 'From ' + n + ' entr' + (n === 1 ? 'y' : 'ies') + ' in the dues book.'
            : 'Nothing in the dues book today.';
 }
-
-/* ── removals ── */
-function addRemoval(){ removals.push({amount:'', reason:'', byWhom:''}); }
-
-function renderRemovals(){
-  $('removalList').innerHTML = removals.map((rm, i) =>
-    '<div class="removal">' +
-      '<div class="rhd"><span>Removal ' + (i+1) + '</span>' +
-        (removals.length > 1 ? '<button class="x" data-rm="' + i + '" aria-label="Remove">×</button>' : '') +
-      '</div>' +
-      '<div class="grid2" style="margin-bottom:10px">' +
-        '<div><span class="mini">Amount</span><input type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" data-i="' + i + '" data-f="amount" value="' + esc(rm.amount) + '"></div>' +
-        '<div><span class="mini">Taken by</span><input type="text" placeholder="Name" data-i="' + i + '" data-f="byWhom" value="' + esc(rm.byWhom) + '"></div>' +
-      '</div>' +
-      '<span class="mini">Reason</span>' +
-      '<input type="text" placeholder="Banked, owner draw, paid the milkman" data-i="' + i + '" data-f="reason" value="' + esc(rm.reason) + '">' +
-    '</div>').join('');
-
-  $('removalList').querySelectorAll('input').forEach(el => {
-    el.oninput = () => {
-      removals[+el.dataset.i][el.dataset.f] = el.value;
-      if (el.dataset.f === 'amount') renderCloseTape();
-    };
-  });
-  $('removalList').querySelectorAll('[data-rm]').forEach(b => {
-    b.onclick = () => { removals.splice(+b.dataset.rm, 1); renderRemovals(); renderCloseTape(); };
-  });
-}
-
-$('addRemovalBtn').onclick = () => { addRemoval(); renderRemovals(); };
 
 /* ── the day's arithmetic ── */
 function movementValues(){
@@ -824,10 +850,10 @@ function movementValues(){
     sales:    r2($('mSales').value),
     advance:  r2(boot.derived.cashIn),
     dues:     0,
-    topup:    r2($('mTopup').value),
-    refund:   r2($('mRefund').value),
+    topup:    r2((boot.day.logged || {}).topup),
+    refund:   r2((boot.day.logged || {}).refund),
     returned: r2(boot.derived.cashOut),
-    removed:  r2(removals.reduce((s, rm) => s + (Number(rm.amount) || 0), 0))
+    removed:  r2((boot.day.logged || {}).removed)
   };
 }
 const expectedFrom = v => r2(v.opening + v.sales + v.advance + v.dues + v.topup - v.refund - v.returned - v.removed);
@@ -858,31 +884,18 @@ function renderCloseTape(){
   $('closeTotal').textContent = money(expectedFrom(v));
 }
 
-['mSales','mTopup','mRefund'].forEach(id => $(id).addEventListener('input', renderCloseTape));
+$('mSales').addEventListener('input', renderCloseTape);
 
 $('checkBtn').dataset.label = 'Check the day';
 $('checkBtn').onclick = async () => {
   if ($('mSales').value === '') return notice($('closeMsg'), 'Enter the cash sales figure from the POS. If it really was zero, type 0.');
-
-  const bad = removals.find(rm => (Number(rm.amount) || 0) > 0 && (!rm.reason.trim() || !rm.byWhom.trim()));
-  if (bad) return notice($('closeMsg'), 'Every removal needs both a reason and a name. Cash that leaves without a record shows up as a shortage and someone gets blamed for it.');
-  if (r2($('mTopup').value) > 0 && !$('mTopupBy').value.trim()) return notice($('closeMsg'), 'Say who put the top-up in.');
 
   if (!confirm('Check the day?\n\nThese figures lock now and the difference appears. You cannot go back and adjust them.')) return;
 
   notice($('closeMsg'), '');
   busy($('checkBtn'), true, 'Checking…');
   try{
-    const r = await api('saveMovements', {
-      sales:  r2($('mSales').value),
-      topup:  r2($('mTopup').value),
-      topupBy: $('mTopupBy').value.trim(),
-      refund: r2($('mRefund').value),
-      refundReason: $('mRefundReason').value.trim(),
-      removals: removals
-        .filter(rm => (Number(rm.amount) || 0) > 0)
-        .map(rm => ({amount: r2(rm.amount), reason: rm.reason.trim(), byWhom: rm.byWhom.trim()}))
-    });
+    const r = await api('saveMovements', {sales: r2($('mSales').value)});
     busy($('checkBtn'), false);
     if (!r.ok) return notice($('closeMsg'), r.error);
     boot = r;
@@ -954,6 +967,71 @@ function fillClosed(d){
     money(r2(own - boot.float)) + ' you could actually take out.';
 }
 
+/* ═══════════ CASH IN / OUT ═══════════ */
+$('cashType').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  [...$('cashType').children].forEach(c => c.setAttribute('aria-pressed', c === b));
+  syncCashType();
+};
+function cashTypeValue(){
+  const b = [...$('cashType').children].find(x => x.getAttribute('aria-pressed') === 'true');
+  return b ? b.dataset.v : 'owner_topup';
+}
+function syncCashType(){
+  const t = cashTypeValue();
+  $('cByField').classList.toggle('hidden', t === 'refund_paid');
+  $('cReason').placeholder = t === 'owner_topup' ? 'Change bought, float topped up'
+    : t === 'cash_removed' ? 'Banked, owner draw'
+    : 'Which order was refunded';
+}
+syncCashType();
+
+function renderCashPane(){
+  const lg = (boot.day || {}).logged || {topup: 0, refund: 0, removed: 0, entries: []};
+  $('cTotIn').textContent  = money(lg.topup);
+  $('cTotOut').textContent = money(lg.removed);
+  $('cTotRef').textContent = money(lg.refund);
+  const e = lg.entries || [];
+  $('cList').innerHTML = e.length ? e.map(x =>
+    '<div class="lrow"><span class="li"><span class="ln">' + esc(x.label) + '</span><br>' +
+    '<span class="lm">' + esc(x.reason) + (x.byWhom ? ' · ' + esc(x.byWhom) : '') +
+    ' · ' + esc(x.enteredBy) + '</span></span>' +
+    '<span class="la">' + (x.dir === 'out' ? '− ' : '') + money(x.amount) + '</span></div>').join('')
+    : '<div class="empty">Nothing logged yet today.</div>';
+}
+
+$('cSaveBtn').dataset.label = 'Log it';
+$('cSaveBtn').onclick = async () => {
+  const type = cashTypeValue();
+  const amount = r2($('cAmount').value);
+  const reason = $('cReason').value.trim();
+  const byWhom = $('cBy').value.trim();
+  if (!(amount > 0)) return notice($('cashMsg'), 'Enter the amount.');
+  if (!reason) return notice($('cashMsg'), 'Write the reason. Cash with no reason against it turns into a shortage nobody can explain.');
+  if (type !== 'refund_paid' && !byWhom) return notice($('cashMsg'), 'Say whose hands the cash went into or came from.');
+
+  if (boot.day && boot.day.movements){
+    if (!confirm('The day is already checked, so this will not change today\'s figures.\n\nLog it anyway? It lands on tomorrow.')) return;
+  }
+
+  notice($('cashMsg'), '');
+  busy($('cSaveBtn'), true, 'Logging…');
+  try{
+    const r = await api('addCashMovement', {type: type, amount: amount, reason: reason, byWhom: byWhom});
+    busy($('cSaveBtn'), false);
+    if (!r.ok) return notice($('cashMsg'), r.error);
+    boot = r;
+    $('cAmount').value = ''; $('cReason').value = ''; $('cBy').value = '';
+    refresh();
+    notice($('cashMsg'), money(amount) + ' logged.', 'ok');
+  }catch(err){
+    busy($('cSaveBtn'), false);
+    notice($('cashMsg'), err.message + ' Nothing was saved.');
+  }
+};
+
+$('toCashBtn').onclick = () => switchTab('cash');
+  
 /* ═══════════ DUES ═══════════ */
 function renderDuesPane(){
   const sel = $('dCustomer'), keep = sel.value;
@@ -1144,7 +1222,7 @@ $('sSaveBtn').onclick = async () => {
 };
 
 /* ═══════════ TABS ═══════════ */
-const TITLES = {count:'Count the drawer', close:'Close the day', dues:'Dues book', sales:'Sales tally'};
+const TITLES = {count:'Count the drawer', cash:'Cash in and out', close:'Close the day', dues:'Dues book', sales:'Sales tally'};
 $('tabs').onclick = e => {
   const b = e.target.closest('button'); if (!b) return;
   switchTab(b.dataset.v);
@@ -1152,6 +1230,7 @@ $('tabs').onclick = e => {
 function switchTab(v){
   [...$('tabs').children].forEach(c => c.setAttribute('aria-selected', c.dataset.v === v));
   $('countPane').classList.toggle('hidden', v !== 'count');
+  $('cashPane').classList.toggle('hidden',  v !== 'cash');
   $('closePane').classList.toggle('hidden', v !== 'close');
   $('duesPane').classList.toggle('hidden',  v !== 'dues');
   $('salesPane').classList.toggle('hidden', v !== 'sales');
