@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#3E2C1C">
 <title>Le Chaaya — Cash ledger</title>
@@ -275,14 +274,9 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
           <p class="help">Read this off the POS. Never work it out from the cash in the drawer — that makes the check meaningless.</p>
         </div>
         <div class="field">
-          <label class="lbl" for="mAdvance">Change kept back for customers</label>
+          <label class="lbl" for="mAdvance">From the dues book — cash in</label>
           <input id="mAdvance" type="number" disabled>
           <p class="help" id="advanceHelp"></p>
-        </div>
-        <div class="field">
-          <label class="lbl" for="mDues">Old dues collected in cash</label>
-          <input id="mDues" type="number" disabled>
-          <p class="help" id="duesHelp"></p>
         </div>
         <div class="field">
           <label class="lbl" for="mTopup">Owner top-up</label>
@@ -298,7 +292,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
           <input id="mRefundReason" type="text" style="margin-top:9px" placeholder="What was refunded">
         </div>
         <div class="field">
-          <label class="lbl" for="mReturned">Change settled with customers</label>
+          <label class="lbl" for="mReturned">From the dues book — cash out</label>
           <input id="mReturned" type="number" disabled>
           <p class="help" id="returnHelp"></p>
         </div>
@@ -345,7 +339,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
         <div class="reveal quiet">
           <p class="eyebrow" style="margin-bottom:10px">Whose money is in the drawer</p>
           <div class="rrow"><span>Counted</span><span id="czOwnCounted">₹0</span></div>
-          <div class="rrow"><span>Change you still owe customers</span><span id="czHeld">₹0</span></div>
+          <div class="rrow"><span>Money that is not yours</span><span id="czHeld">₹0</span></div>
           <div class="diff"><strong>The business's cash</strong><span class="big" id="czOwn">₹0</span></div>
           <p class="help" id="czFree"></p>
         </div>
@@ -379,21 +373,22 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
       <div class="field">
         <label class="lbl" for="dEvent">What happened</label>
         <select id="dEvent">
-          <option value="advance_taken">We owed them change and kept it</option>
-          <option value="advance_returned">We settled their change</option>
-          <option value="credit_given">They took goods without paying</option>
-          <option value="dues_collected">They settled what they owed</option>
+          <option value="Payable">We kept their change</option>
+          <option value="Payable Settled">We gave their change back</option>
+          <option value="Payable Adjusted">We knocked it off their bill</option>
+          <option value="Receivable">They took goods without paying</option>
+          <option value="Receivable Settled">They paid what they owed</option>
         </select>
         <p class="help" id="dEventHelp"></p>
       </div>
 
-      <div class="field hidden" id="dMethodField">
-        <label class="lbl">How the money came in</label>
+      <div class="field" id="dMethodField">
+        <label class="lbl">How the money moved</label>
         <div class="seg tight" id="dMethod">
           <button type="button" data-v="cash" aria-pressed="true">Cash</button>
           <button type="button" data-v="upi" aria-pressed="false">UPI</button>
         </div>
-        <p class="help">Cash entries are added to today's drawer figures automatically.</p>
+        <p class="help">For the record only. Today's drawer figures are worked out from the event itself.</p>
       </div>
 
       <div class="field">
@@ -475,7 +470,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 /* ═══════════════════════════════════════════
    CONFIG — paste the Apps Script /exec URL here
    ═══════════════════════════════════════════ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbw4h-ROQl4gGKNhK4cN0ZxdDXZjSTRqs8p_N72Y22pafJvINSMl9idtU6wIKU2yF1k/exec';
+const API_URL = 'ttps://script.google.com/macros/s/AKfycbw4h-ROQl4gGKNhK4cN0ZxdDXZjSTRqs8p_N72Y22pafJvINSMl9idtU6wIKU2yF1k/exec';
 
 const SESSION_KEY = 'lc_cash_session';
 const SESSION_HOURS = 12;
@@ -492,12 +487,12 @@ const COINS = [
 const ALL_DENOMS = NOTES.concat(COINS);
 
 const EVENT_HELP = {
-  advance_taken:     'You could not give full change, so the balance stayed in the drawer. That money is theirs, not yours.',
-  advance_returned:  'Either you handed the cash back, or you knocked it off their next bill. Log it both ways — ring the full bill on the POS and record the settlement here.',
-  credit_given:      'They walked out without paying. No money moves today.',
-  dues_collected:    'They cleared an old balance.'
+  'Payable':            'You could not give full change, so the balance stayed in the drawer. That money is theirs, not yours.',
+  'Payable Settled':    'You handed the cash back.',
+  'Payable Adjusted':   'You knocked it off their bill instead of handing cash over. Ring the FULL bill on the POS and log it here — otherwise the drawer looks short by this amount.',
+  'Receivable':         'They walked out without paying. The sale is on the POS but the cash is not in the drawer.',
+  'Receivable Settled': 'They cleared an old balance.'
 };
-const MONEY_IN = {advance_taken: true, dues_collected: true};
 
 let boot = null;
 let counts = {};
@@ -768,12 +763,10 @@ function renderClosePane(){
 
   $('mOpening').value = d.opening.total;
   $('openingHelp').textContent = 'Counted by ' + d.opening.by + ' at ' + d.opening.at + '.';
-  $('mAdvance').value = boot.derived.advancesCash;
-  $('mDues').value = boot.derived.duesCash;
-  $('mReturned').value = boot.derived.advancesReturned;
-  $('advanceHelp').textContent = fromLedger(boot.derived.advanceCount);
-  $('duesHelp').textContent = fromLedger(boot.derived.duesCount);
-  $('returnHelp').textContent = fromLedger(boot.derived.returnCount);
+  $('mAdvance').value = boot.derived.cashIn;
+  $('mReturned').value = boot.derived.cashOut;
+  $('advanceHelp').textContent = fromLedger(boot.derived.inCount);
+  $('returnHelp').textContent = fromLedger(boot.derived.outCount);
 
   if (!locked && !removals.length) addRemoval();
   if (!locked) renderRemovals();
@@ -824,11 +817,11 @@ function movementValues(){
   return {
     opening:  r2(d.opening.total),
     sales:    r2($('mSales').value),
-    advance:  r2(boot.derived.advancesCash),
-    dues:     r2(boot.derived.duesCash),
+    advance:  r2(boot.derived.cashIn),
+    dues:     0,
     topup:    r2($('mTopup').value),
     refund:   r2($('mRefund').value),
-    returned: r2(boot.derived.advancesReturned),
+    returned: r2(boot.derived.cashOut),
     removed:  r2(removals.reduce((s, rm) => s + (Number(rm.amount) || 0), 0))
   };
 }
@@ -847,11 +840,10 @@ function renderCloseTape(){
   const rows = [
     ['In the drawer this morning', v.opening, false, true],
     ['Cash sales', v.sales, false, true],
-    ['Change kept back', v.advance, false, false],
-    ['Dues collected', v.dues, false, false],
+    ['Dues book, cash in', v.advance, false, false],
     ['Owner top-up', v.topup, false, false],
     ['Refunds paid', v.refund, true, false],
-    ['Change settled', v.returned, true, false],
+    ['Dues book, cash out', v.returned, true, false],
     ['Taken out of the drawer', v.removed, true, false]
   ].filter(r => r[1] !== 0 || r[3]);
 
@@ -953,10 +945,8 @@ function fillClosed(d){
   $('czOwnCounted').textContent = money(d.closing.total);
   $('czHeld').textContent = money(boot.advancesHeld);
   $('czOwn').textContent = money(own);
-  $('czFree').textContent = boot.float > 0
-    ? 'Less the ' + money(boot.float) + ' float, that leaves ' +
-      money(r2(own - boot.float)) + ' you could actually take out.'
-    : 'All of it is yours to take out — no float is set aside.';
+  $('czFree').textContent = 'Less the ' + money(boot.float) + ' float, that leaves ' +
+    money(r2(own - boot.float)) + ' you could actually take out.';
 }
 
 /* ═══════════ DUES ═══════════ */
@@ -973,11 +963,19 @@ function renderDuesPane(){
   };
 
   const bal = boot.balances || [];
-  $('balList').innerHTML = bal.length ? bal.map(b =>
-    '<div class="lrow"><span class="li"><span class="ln">' + esc(b.customer) + '</span><br>' +
-    '<span class="lm">' + (b.advance > 0 ? 'you owe them change' : 'owes you') + '</span></span>' +
-    '<span class="la">' + money(b.advance > 0 ? b.advance : b.due) +
-    '<small>' + (b.advance > 0 ? 'CHANGE OWED' : 'DUE') + '</small></span></div>').join('')
+  $('balList').innerHTML = bal.length ? bal.map(function(b){
+    const parts = [];
+    if (b.payable    > 0) parts.push('<span class="la">' + money(b.payable)    + '<small>WE OWE</small></span>');
+    if (b.receivable > 0) parts.push('<span class="la">' + money(b.receivable) + '<small>THEY OWE</small></span>');
+    if (b.payable    < 0) parts.push('<span class="la is-off">' + money(b.payable)    + '<small>CHECK THIS</small></span>');
+    if (b.receivable < 0) parts.push('<span class="la is-off">' + money(b.receivable) + '<small>CHECK THIS</small></span>');
+    const net = r2(b.receivable - b.payable);
+    const sub = (b.payable > 0 && b.receivable > 0)
+      ? 'net: ' + (net > 0 ? 'they owe you ' + money(net) : 'you owe them ' + money(-net))
+      : (b.payable > 0 ? 'change we kept' : 'unpaid tab');
+    return '<div class="lrow"><span class="li"><span class="ln">' + esc(b.customer) + '</span><br>' +
+      '<span class="lm">' + sub + '</span></span>' + parts.join('') + '</div>';
+  }).join('')
     : '<div class="empty">Nobody owes anything, and you owe nobody change.</div>';
 
   const ent = boot.recent || [];
@@ -992,7 +990,7 @@ function renderDuesPane(){
 function syncEvent(){
   const ev = $('dEvent').value;
   $('dEventHelp').textContent = EVENT_HELP[ev];
-  $('dMethodField').classList.toggle('hidden', !MONEY_IN[ev]);
+  $('dMethodField').classList.toggle('hidden', ev === 'Receivable');
 }
 $('dEvent').onchange = syncEvent;
 syncEvent();
@@ -1012,10 +1010,9 @@ $('dSaveBtn').onclick = async () => {
   if (!(amount > 0)) return notice($('duesMsg'), 'Enter the amount.');
 
   const btn = [...$('dMethod').children].find(b => b.getAttribute('aria-pressed') === 'true');
-  const method = MONEY_IN[ev] ? (btn ? btn.dataset.v : 'cash') : '';
-  const touchesCash = method === 'cash' || ev === 'advance_returned';
+  const method = ev === 'Receivable' ? '' : (btn ? btn.dataset.v : 'cash');
 
-  if (boot.day && boot.day.movements && touchesCash){
+  if (boot.day && boot.day.movements){
     if (!confirm('The day\'s figures are already locked, so this will not be counted in today\'s check.\n\nAdd it anyway? It lands on tomorrow.')) return;
   }
 
