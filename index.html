@@ -443,14 +443,16 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
       </div>
 
       <div class="reveal quiet" id="salesPreview">
-        <div class="rrow"><span>Cash recorded in the ledger today</span><span id="spCash">—</span></div>
-        <div class="rrow"><span>POS says cash was</span><span id="spPos">—</span></div>
-        <div class="diff"><strong>Cash gap</strong><span class="big" id="spGap">—</span></div>
+        <div class="rrow"><span>POS total (cash + card + UPI)</span><span id="spPos">—</span></div>
+        <div class="rrow"><span>Physical Cash Received</span><span id="spCash">—</span></div>
+        <div class="rrow"><span>Credited to the bank</span><span id="spBank">—</span></div>
+        <div class="rrow"><span>Taken on credit today</span><span id="spCredit">—</span></div>
+        <div class="diff"><strong>Unaccounted</strong><span class="big" id="spGap">—</span></div>
         <p class="help" id="spNote" style="margin-top:8px"></p>
       </div>
 
       <button class="btn wide" id="sSaveBtn">Save the tally</button>
-      <p class="help" style="margin-bottom:24px">The bank gap is worked out on the Sales Tally tab of the sheet.</p>
+      <p class="help" style="margin-bottom:24px">Cash comes from the two drawer counts, not from the POS tag — so a cash sale logged as UPI, or the reverse, cannot move this number.</p>
     </div>
   </div>
 </section>
@@ -1072,30 +1074,50 @@ $('dSaveBtn').onclick = async () => {
 /* ═══════════ SALES TALLY ═══════════ */
 function renderSalesPane(){
   const d = boot.day || {};
-  const recorded = d.movements ? d.movements.cashSales : null;
-  const pos = r2($('sPosCash').value);
   const isToday = $('sDate').value === boot.today;
+  const posTotal = r2(r2($('sPosCash').value) + r2($('sPosCard').value) + r2($('sPosUpi').value));
+  const bank = r2($('sBank').value);
 
-  if (recorded === null || !isToday){
+  $('spPos').textContent  = posTotal ? money(posTotal) : '—';
+  $('spBank').textContent = bank ? money(bank) : '—';
+
+  const ready = isToday && d.opening && d.closing && d.movements;
+  if (!ready){
     $('spCash').textContent = '—';
-    $('spPos').textContent = pos ? money(pos) : '—';
+    $('spCredit').textContent = '—';
     $('spGap').textContent = '—';
     $('spGap').className = 'big';
     $('spNote').textContent = isToday
-      ? 'The cash gap appears once the day has been checked on the Close day tab.'
-      : 'Comparing against a past day is done on the Sales Tally tab of the sheet.';
+      ? 'The cash figure appears once the day has been checked on the Close day tab.'
+      : 'For a past day, the Sales Tally tab of the sheet works this out.';
     return;
   }
-  const gap = r2(recorded - pos);
-  $('spCash').textContent = money(recorded);
-  $('spPos').textContent  = money(pos);
-  $('spGap').textContent  = signed(gap);
-  $('spGap').className = 'big ' + (Math.abs(gap) > boot.tolerance ? 'is-off' : 'is-ok');
-  $('spNote').textContent = Math.abs(gap) > boot.tolerance
-    ? 'The cash sales figure entered tonight does not match what the POS reports. One of them was typed wrong, or a sale was tendered to the wrong channel.'
-    : 'The cash figure entered tonight matches the POS.';
+
+  /* Cash that arrived from today's selling, taken from the two counts rather
+     than from the POS tag. Everything that moved for another reason comes out. */
+  const m = d.movements;
+  const cashFromSales = r2(
+    d.closing.total - d.opening.total
+    - m.ownerTopup - m.payableIn - m.receivableIn
+    + m.refunds + m.removed + m.payableOut
+  );
+  const credit = r2(m.receivableOut);
+  const gap = r2(posTotal - cashFromSales - bank - credit);
+  const off = Math.abs(gap) > boot.tolerance;
+
+  $('spCash').textContent   = money(cashFromSales);
+  $('spCredit').textContent = money(credit);
+  $('spGap').textContent    = signed(gap);
+  $('spGap').className = 'big ' + (off ? 'is-off' : 'is-ok');
+  $('spNote').textContent = !posTotal
+    ? 'Enter the POS figures to see the gap.'
+    : off
+      ? (gap > 0
+          ? 'Rung up but never reached you, in cash or in the bank. Check the bank credit first, then the day\'s removals.'
+          : 'More arrived than was rung up. Usually a sale that was never put through the POS.')
+      : 'Everything rung up is accounted for. Cash tagged as UPI or the other way round cannot show here, which is the point.';
 }
-['sPosCash','sDate'].forEach(id => $(id).addEventListener('input', renderSalesPane));
+['sPosCash','sPosCard','sPosUpi','sBank','sDate'].forEach(id => $(id).addEventListener('input', renderSalesPane));
 
 $('sSaveBtn').dataset.label = 'Save the tally';
 $('sSaveBtn').onclick = async () => {
